@@ -65,7 +65,7 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/gd-webhook.git
+git clone https://github.com/PiliPili-Team/gugugaga-go.git
 cd gd-webhook
 
 # Start with Docker Compose
@@ -76,7 +76,7 @@ docker-compose up -d
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/gd-webhook.git
+git clone https://github.com/PiliPili-Team/gugugaga-go.git
 cd gd-webhook
 
 # Build frontend
@@ -95,7 +95,7 @@ go build -o gd-webhook-server ./src
 ### Option 3: Quick Install Script (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yourusername/gd-webhook/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/PiliPili-Team/gugugaga-go/main/install.sh | bash
 ```
 
 ## Configuration

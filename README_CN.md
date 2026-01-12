@@ -65,7 +65,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/gd-webhook.git
+git clone https://github.com/PiliPili-Team/gugugaga-go.git
 cd gd-webhook
 
 # 使用 Docker Compose 启动
@@ -76,7 +76,7 @@ docker-compose up -d
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/gd-webhook.git
+git clone https://github.com/PiliPili-Team/gugugaga-go.git
 cd gd-webhook
 
 # 构建前端
@@ -95,7 +95,7 @@ go build -o gd-webhook-server ./src
 ### 方式三：一键安装脚本（推荐）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yourusername/gd-webhook/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/PiliPili-Team/gugugaga-go/main/install.sh | bash
 ```
 
 ## 配置说明
