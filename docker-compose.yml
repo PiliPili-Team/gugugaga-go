@@ -1,0 +1,16 @@
+version: "3"
+services:
+  gd-webhook:
+    build: .
+    container_name: gd-webhook
+    restart: unless-stopped
+    ports:
+      - "8448:8448"
+    volumes:
+      - ./userdata:/app/userdata
+      # Uncomment if using SSL certificates
+      # - /etc/ssl_store/:/etc/ssl_store/
+    environment:
+      - TZ=Asia/Shanghai
+      - APP_NAME=GD Watcher
+      - APP_VERSION=4.0

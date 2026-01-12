@@ -1,0 +1,108 @@
+########################
+# OS / Editor
+########################
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+.idea/
+.vscode/
+.cursor/
+.claude/
+*.swp
+*.swo
+*.tmp
+*~
+
+########################
+# Go
+########################
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace
+/bin/
+/pkg/
+/coverage.out
+
+# Go cache
+.go-build/
+.golangci.yml
+
+# Compiled binary
+gd-webhook-server
+
+########################
+# Frontend (common)
+########################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+dist/
+build/
+.output/
+.next/
+.nuxt/
+.vite/
+
+########################
+# Frontend environment variables
+########################
+.env
+.env.*
+!.env.example
+
+########################
+# Logs
+########################
+logs/
+*.log
+
+########################
+# Runtime / user data
+########################
+userdata/
+tmp/
+temp/
+
+########################
+# Docker
+########################
+# Local docker data
+docker-data/
+.volumes/
+
+########################
+# Tests / coverage
+########################
+coverage/
+*.coverprofile
+
+########################
+# Other tools
+########################
+.superdesign/
+.windsurfrules
+
+########################
+# Security / Credentials
+########################
+*.pem
+*.key
+*.crt
+credentials.json
+token.json
+
+########################
+# Internal docs (not for public)
+########################
+docs/REFACTOR_PLAN.md
