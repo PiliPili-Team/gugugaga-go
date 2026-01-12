@@ -117,7 +117,7 @@ go build -o gd-webhook-server ./src
 ### Option 3: Quick Install Script (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/PiliPili-Team/gugugaga-go/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/PiliPili-Team/gugugaga-go/main/onekey-install.sh | bash
 ```
 
 ## Configuration

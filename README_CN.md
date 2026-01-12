@@ -117,7 +117,7 @@ go build -o gd-webhook-server ./src
 ### 方式三：一键安装脚本（推荐）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/PiliPili-Team/gugugaga-go/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/PiliPili-Team/gugugaga-go/main/onekey-install.sh | bash
 ```
 
 ## 配置说明
