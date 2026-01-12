@@ -123,6 +123,28 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- CPU Usage Card -->
+        <div class="status-card cpu-usage">
+          <div class="card-icon">
+            <Cpu :size="24" />
+          </div>
+          <div class="card-content">
+            <span class="card-label">{{ t('dashboard.cpuUsage') }}</span>
+            <span class="card-value">{{ formattedCpuUsage }}</span>
+          </div>
+        </div>
+
+        <!-- Memory Usage Card -->
+        <div class="status-card memory-usage">
+          <div class="card-icon">
+            <HardDrive :size="24" />
+          </div>
+          <div class="card-content">
+            <span class="card-label">{{ t('dashboard.memoryUsage') }}</span>
+            <span class="card-value">{{ formattedMemoryUsage }}</span>
+          </div>
+        </div>
+
         <!-- History Completed Tasks Card -->
         <div class="status-card history-tasks">
           <div class="card-icon">
@@ -145,27 +167,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- CPU Usage Card -->
-        <div class="status-card cpu-usage">
-          <div class="card-icon">
-            <Cpu :size="24" />
-          </div>
-          <div class="card-content">
-            <span class="card-label">{{ t('dashboard.cpuUsage') }}</span>
-            <span class="card-value">{{ formattedCpuUsage }}</span>
-          </div>
-        </div>
-
-        <!-- Memory Usage Card -->
-        <div class="status-card memory-usage">
-          <div class="card-icon">
-            <HardDrive :size="24" />
-          </div>
-          <div class="card-content">
-            <span class="card-label">{{ t('dashboard.memoryUsage') }}</span>
-            <span class="card-value">{{ formattedMemoryUsage }}</span>
-          </div>
-        </div>
       </div>
     </div>
   </div>

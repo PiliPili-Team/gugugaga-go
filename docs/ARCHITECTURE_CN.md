@@ -28,7 +28,7 @@ flowchart TB
 
     subgraph Integrations["外部服务"]
         Rclone -->|VFS 刷新| RcloneRC[Rclone RC API]
-        Symedia -->|Webhook| MediaServer[Emby/Jellyfin/Plex]
+        Symedia -->|Webhook| MediaServer[Emby]
     end
 
     subgraph UI["Web 界面"]
@@ -48,7 +48,7 @@ flowchart TB
 | **Drive API 客户端** | 与 Google Drive API 交互获取文件变更 |
 | **文件树缓存** | 文件/文件夹结构的内存缓存 |
 | **Rclone 服务** | 触发 Rclone VFS 刷新已挂载的网盘 |
-| **Symedia 服务** | 向媒体服务器（Emby/Jellyfin/Plex）发送 webhook |
+| **Symedia 服务** | 向媒体服务器（Emby）发送 webhook |
 
 ### 数据流
 

@@ -28,7 +28,7 @@ flowchart TB
 
     subgraph Integrations["External Services"]
         Rclone -->|VFS Refresh| RcloneRC[Rclone RC API]
-        Symedia -->|Webhook| MediaServer[Emby/Jellyfin/Plex]
+        Symedia -->|Webhook| MediaServer[Emby]
     end
 
     subgraph UI["Web Interface"]
@@ -48,7 +48,7 @@ flowchart TB
 | **Drive API Client** | Interfaces with Google Drive API for file changes |
 | **File Tree Cache** | In-memory cache of file/folder structure |
 | **Rclone Service** | Triggers Rclone VFS refresh for mounted drives |
-| **Symedia Service** | Sends webhooks to media servers (Emby/Jellyfin/Plex) |
+| **Symedia Service** | Sends webhooks to media servers (Emby) |
 
 ### Data Flow
 

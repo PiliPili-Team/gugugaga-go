@@ -88,7 +88,7 @@
 ```bash
 # 克隆仓库
 git clone https://github.com/PiliPili-Team/gugugaga-go.git
-cd gd-webhook
+cd gugugaga-go
 
 # 使用 Docker Compose 启动
 docker-compose up -d
@@ -99,7 +99,7 @@ docker-compose up -d
 ```bash
 # 克隆仓库
 git clone https://github.com/PiliPili-Team/gugugaga-go.git
-cd gd-webhook
+cd gugugaga-go
 
 # 构建前端
 cd web-src
@@ -136,34 +136,92 @@ curl -fsSL https://raw.githubusercontent.com/PiliPili-Team/gugugaga-go/main/inst
 
 ### 配置文件
 
-配置存储在 `userdata/config/config.json`：
+配置存储在 `userdata/config/config.json`，模板文件参照 [`config.json.exmaple`](./config.json.exmaple)：
 
 ```json
 {
   "auth": {
     "username": "admin",
-    "password": "your-secure-password"
+    "password": "password"
+  },
+  "oauth_config": {
+    "client_id": "",
+    "client_secret": "",
+    "redirect_uri": ""
+  },
+  "advanced": {
+    "log_level": 2,
+    "log_save_enabled": true,
+    "log_dir": "logs",
+    "log_max_size_mb": 10,
+    "debounce_seconds": 5,
+    "rclone_wait_seconds": 5,
+    "log_cleanup_enabled": false,
+    "log_retention_days": 7,
+    "log_cleanup_cron": "0 0 3 * * ?"
   },
   "server": {
     "listen_port": 8448,
-    "public_url": "https://your-domain.com",
-    "webhook_path": "/gd-webhook"
+    "public_url": "",
+    "webhook_path": "/gd-webhook",
+    "ssl": {
+      "enabled": false,
+      "cert_path": "",
+      "key_path": "",
+      "restrict_to_domain": false
+    }
+  },
+  "google": {
+    "rate_limit_qps": 5,
+    "my_drive_name": "",
+    "ignored_parents": [
+    ]
   },
   "rclone": [
     {
-      "name": "MyRclone",
-      "host": "http://localhost:5572",
+      "name": "anime",
+      "host": "http://127.0.0.1:5173",
       "endpoint": "/vfs/refresh",
-      "mapping": [...]
+      "mapping": [
+        {
+          "regex": "",
+          "replacement": ""
+        }
+      ]
     }
   ],
   "symedia": {
-    "host": "http://localhost:8096",
-    "endpoint": "/emby/Library/Media/Updated",
+    "host": "http://127.0.0.1:8095",
+    "endpoint": "/api/v1/webhook/clouddrive2/file_notify",
+    "notify_unmatched": false,
     "headers": {
-      "X-Emby-Token": "your-api-key"
+      "content-type": "application/json",
+      "user-agent": "clouddrive2/0.9.8",
+      "authorization": "basic usernamepassword"
+    },
+    "body_template": {
+      "data": [
+        {
+          "action": "{{ACTION}}",
+          "destination_file": "",
+          "is_dir": "{{IS_DIR}}",
+          "source_file": "{{FILE_PATH}}"
+        }
+      ],
+      "device_name": "Manual-Test",
+      "event_category": "file",
+      "event_name": "notify",
+      "type": "notify",
+      "user_name": "admin",
+      "version": "0.9.8"
     }
-  }
+  },
+  "path_mapping": [
+    {
+      "regex": "",
+      "replacement": ""
+    }
+  ]
 }
 ```
 

@@ -16,7 +16,7 @@ import (
 	"gd-webhook/src/model"
 )
 
-// SymediaService handles webhooks to external media systems (Emby/Plex etc.)
+// SymediaService handles webhooks to external media systems (Emby)
 type SymediaService struct {
 	ConfigManager *config.Manager
 }
