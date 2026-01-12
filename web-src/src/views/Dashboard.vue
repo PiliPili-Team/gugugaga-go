@@ -186,6 +186,10 @@ function updateStatusBarColor(theme: string) {
   document.head.appendChild(themeColorMeta)
   
   // Update apple-mobile-web-app-status-bar-style
+  // iOS status bar styles:
+  // - 'default': white background + black text/icons (for light mode)
+  // - 'black': black background + white text/icons
+  // - 'black-translucent': transparent background + white text/icons (content extends under status bar)
   let statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
   if (!statusBarMeta) {
     statusBarMeta = document.createElement('meta')
@@ -194,13 +198,13 @@ function updateStatusBarColor(theme: string) {
   }
   
   if (theme === 'light') {
-    // Light mode: white/light background, black text/icons
-    themeColorMeta.setAttribute('content', '#ffffff')
-    statusBarMeta.setAttribute('content', 'black') // iOS: black text/icons on light bg
+    // Light mode: white background, black text/icons in status bar
+    themeColorMeta.setAttribute('content', '#f8fafc') // Match light mode background
+    statusBarMeta.setAttribute('content', 'default') // iOS: white bg + black text/icons
   } else {
     // Dark mode: dark background, white text/icons
-    themeColorMeta.setAttribute('content', '#1a1625')
-    statusBarMeta.setAttribute('content', 'black-translucent') // iOS: white text/icons, transparent bg
+    themeColorMeta.setAttribute('content', '#0f0c18') // Match dark mode background
+    statusBarMeta.setAttribute('content', 'black-translucent') // iOS: transparent bg + white text/icons
   }
 }
 

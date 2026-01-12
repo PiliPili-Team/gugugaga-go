@@ -4,8 +4,8 @@
   "description": "Google Drive 文件变更监控系统",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1625",
-  "theme_color": "#1a1625",
+  "background_color": "#0f0c18",
+  "theme_color": "#0f0c18",
   "orientation": "any",
   "icons": [
     {
