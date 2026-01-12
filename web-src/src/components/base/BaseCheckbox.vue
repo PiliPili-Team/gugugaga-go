@@ -88,10 +88,10 @@ const checked = computed({
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: var(--color-bg-base);
-  border: 2px solid var(--color-border);
+  background: var(--checkbox-bg);
+  border: 2px solid var(--checkbox-border);
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast) var(--ease-default);
 }
 
 .checkbox-sm .checkbox-box {
@@ -108,8 +108,8 @@ const checked = computed({
 .checkbox-icon {
   opacity: 0;
   transform: scale(0.5);
-  transition: all var(--transition-fast);
-  color: var(--color-bg-base);
+  transition: all var(--duration-fast) var(--ease-default);
+  color: var(--checkbox-icon-color);
 }
 
 .checkbox-sm .checkbox-icon {
@@ -124,12 +124,12 @@ const checked = computed({
 
 /* ========== States ========== */
 .base-checkbox:hover:not(.checkbox-disabled) .checkbox-box {
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
 }
 
 .checkbox-checked .checkbox-box {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: var(--checkbox-checked-bg);
+  border-color: var(--checkbox-checked-border);
 }
 
 .checkbox-checked .checkbox-icon {
@@ -144,18 +144,18 @@ const checked = computed({
 
 /* ========== Label ========== */
 .checkbox-label {
-  font-size: var(--font-size-sm);
+  font-size: var(--text-sm);
   color: var(--color-text-primary);
-  line-height: var(--line-height-normal);
+  line-height: var(--leading-normal);
 }
 
 .checkbox-sm .checkbox-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--text-xs);
 }
 
 /* Focus state */
 .checkbox-input:focus-visible + .checkbox-box {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 </style>

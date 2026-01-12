@@ -30,20 +30,32 @@ function updateConfig(path: string, value: any) {
   configStore.updateNested(path, value)
 }
 
+const errorMessage = ref('')
+
 async function handleGoToOAuth() {
   isGettingUrl.value = true
   oauthStatus.value = 'idle'
+  errorMessage.value = ''
   
   try {
+    // Auto-save config before getting OAuth URL to ensure credentials.json is created
+    await configStore.saveConfig()
+    
+    // Small delay to allow backend to process the config
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
     const response = await api.getOAuthLoginURL()
+    
     if (response.url) {
       oauthStatus.value = 'success'
       window.open(response.url, '_blank')
     } else {
       oauthStatus.value = 'error'
+      errorMessage.value = 'Empty URL returned from server'
     }
-  } catch (error) {
+  } catch (error: any) {
     oauthStatus.value = 'error'
+    errorMessage.value = error?.data?.message || error?.message || String(error)
   } finally {
     isGettingUrl.value = false
   }
@@ -148,7 +160,7 @@ async function handleGoToOAuth() {
 
           <div v-if="oauthStatus === 'error'" class="status-message error">
             <AlertCircle :size="16" />
-            <span>{{ t('panels.oauth.urlError') }}</span>
+            <span>{{ t('panels.oauth.urlError') }}: {{ errorMessage || 'Unknown error' }}</span>
           </div>
 
           <div v-if="!configStore.config?.oauth?.client_id" class="status-message warning">

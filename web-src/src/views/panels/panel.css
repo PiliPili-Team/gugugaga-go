@@ -544,6 +544,15 @@ select.input {
   border-color: var(--color-accent);
 }
 
+[data-theme="light"] .checkbox-label input[type="checkbox"]:checked {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+[data-theme="light"] .checkbox-label input[type="checkbox"]:checked::after {
+  border-color: white;
+}
+
 [data-theme="light"] .hint {
   color: #64748b;
 }

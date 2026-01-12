@@ -41,18 +41,37 @@ func NewDriveService(cm *config.Manager) *DriveService {
 
 // InitOAuthConfig loads credentials.json
 func (s *DriveService) InitOAuthConfig() error {
+	logger.Info("🔐 [InitOAuthConfig] Loading credentials from: %s", model.CredFile)
+	
+	// Check if file exists
+	if _, statErr := os.Stat(model.CredFile); os.IsNotExist(statErr) {
+		logger.Error("🔐 [InitOAuthConfig] File does not exist: %s", model.CredFile)
+		return statErr
+	}
+	
 	b, err := os.ReadFile(model.CredFile)
 	if err != nil {
-		logger.Warning("⚠️ credentials.json not found (%v), please configure in WebUI", err)
+		logger.Error("🔐 [InitOAuthConfig] Failed to read file: %v", err)
 		return err
 	}
+	
+	logger.Info("🔐 [InitOAuthConfig] File read successfully, size: %d bytes", len(b))
+	
+	// Log partial content for debugging (hide sensitive data)
+	if len(b) > 0 {
+		logger.Info("🔐 [InitOAuthConfig] File content preview: %s...", string(b[:min(100, len(b))]))
+	}
+	
 	config, err := google.ConfigFromJSON(b, drive.DriveReadonlyScope)
 	if err != nil {
-		logger.Error("❌ Failed to parse credentials.json: %v", err)
+		logger.Error("🔐 [InitOAuthConfig] Failed to parse JSON: %v", err)
 		return err
 	}
+	
 	s.OAuthConfig = config
-	logger.Info("✅ OAuth config loaded")
+	logger.Info("🔐 [InitOAuthConfig] OAuth config loaded successfully")
+	logger.Info("🔐 [InitOAuthConfig] ClientID: %s...", config.ClientID[:min(20, len(config.ClientID))])
+	logger.Info("🔐 [InitOAuthConfig] RedirectURL: %s", config.RedirectURL)
 	return nil
 }
 

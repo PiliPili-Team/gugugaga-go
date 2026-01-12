@@ -519,14 +519,26 @@ func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 
 // HandleOAuthLoginURL returns OAuth login URL
 func (h *Handler) HandleOAuthLoginURL(w http.ResponseWriter, r *http.Request) {
+	logger.Info("🔗 [OAuth] GetLoginURL request received")
+	
 	if h.DriveInfo.OAuthConfig == nil {
-		_ = h.DriveInfo.InitOAuthConfig()
+		logger.Info("🔗 [OAuth] OAuthConfig is nil, attempting to load...")
+		err := h.DriveInfo.InitOAuthConfig()
+		if err != nil {
+			logger.Error("🔗 [OAuth] InitOAuthConfig failed: %v", err)
+		}
 		if h.DriveInfo.OAuthConfig == nil {
-			http.Error(w, "Please save OAuth config first", http.StatusBadRequest)
+			logger.Error("🔗 [OAuth] OAuthConfig still nil after init attempt")
+			http.Error(w, "OAuth config initialization failed. Please check credentials.", http.StatusBadRequest)
 			return
 		}
 	}
+	
+	logger.Info("🔗 [OAuth] Generating auth URL...")
 	authLoginUrl := h.DriveInfo.OAuthConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline, oauth2.ApprovalForce)
+	logger.Info("🔗 [OAuth] Auth URL generated successfully (length: %d)", len(authLoginUrl))
+	
+	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(model.OAuthLoginURLResponse{URL: authLoginUrl})
 }
 
