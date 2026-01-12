@@ -20,12 +20,34 @@
 
 - 🔔 **Real-time Monitoring** - Uses Google Drive Push Notifications (Webhook) for instant file change detection
 - 🔄 **Rclone Integration** - Automatically triggers Rclone VFS refresh when files change
-- 📺 **Media Server Support** - Sends notifications to Emby/Jellyfin/Plex via Symedia webhook
+- 📺 **Media Server Support** - Sends notifications to Emby via Symedia webhook
 - 🌳 **Smart File Tree** - Caches and incrementally updates the file tree structure
 - 🎨 **Modern Web UI** - Beautiful glassmorphism design with Vue 3 + TypeScript
 - 📱 **PWA Support** - Installable on mobile devices with native-like experience
-- 🌍 **Multi-language** - Supports English, Simplified Chinese, Traditional Chinese
+- 🌍 **Multi-language** - Supports English, Simplified Chinese
 - 🌓 **Theme Support** - Light/Dark/System appearance modes
+
+## Screenshots
+
+### Web Interface
+
+<p align="center">
+  <img src="docs/img/web/01.png" width="45%" alt="Web Screenshot 1">
+  <img src="docs/img/web/02.png" width="45%" alt="Web Screenshot 2">
+</p>
+<p align="center">
+  <img src="docs/img/web/03.png" width="45%" alt="Web Screenshot 3">
+  <img src="docs/img/web/04.png" width="45%" alt="Web Screenshot 4">
+</p>
+
+### Mobile PWA
+
+<p align="center">
+  <img src="docs/img/mobile/01.jpg" width="22%" alt="Mobile Screenshot 1">
+  <img src="docs/img/mobile/02.jpg" width="22%" alt="Mobile Screenshot 2">
+  <img src="docs/img/mobile/03.jpg" width="22%" alt="Mobile Screenshot 3">
+  <img src="docs/img/mobile/04.jpg" width="22%" alt="Mobile Screenshot 4">
+</p>
 
 ## Documentation
 
@@ -171,8 +193,6 @@ The configuration is stored in `userdata/config/config.json`:
 ### Media Servers
 
 - [Emby API Documentation](https://github.com/MediaBrowser/Emby/wiki/Api-Documentation)
-- [Jellyfin API](https://api.jellyfin.org/)
-- [Plex Webhooks](https://support.plex.tv/articles/115002267687-webhooks/)
 
 ## Contributing
 

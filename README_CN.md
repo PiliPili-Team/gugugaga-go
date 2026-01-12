@@ -20,12 +20,34 @@
 
 - 🔔 **实时监控** - 使用 Google Drive Push Notifications (Webhook) 实现即时文件变更检测
 - 🔄 **Rclone 集成** - 文件变更时自动触发 Rclone VFS 刷新
-- 📺 **媒体服务器支持** - 通过 Symedia webhook 通知 Emby/Jellyfin/Plex
+- 📺 **媒体服务器支持** - 通过 Symedia webhook 通知 Emby
 - 🌳 **智能文件树** - 缓存并增量更新文件树结构
 - 🎨 **现代化 Web UI** - 毛玻璃设计风格，Vue 3 + TypeScript 构建
 - 📱 **PWA 支持** - 可安装到移动设备，原生应用体验
-- 🌍 **多语言** - 支持英文、简体中文、繁体中文
+- 🌍 **多语言** - 支持英文、简体中文
 - 🌓 **主题切换** - 亮色/暗色/跟随系统 外观模式
+
+## 界面预览
+
+### Web 界面
+
+<p align="center">
+  <img src="docs/img/web/01.png" width="45%" alt="Web 截图 1">
+  <img src="docs/img/web/02.png" width="45%" alt="Web 截图 2">
+</p>
+<p align="center">
+  <img src="docs/img/web/03.png" width="45%" alt="Web 截图 3">
+  <img src="docs/img/web/04.png" width="45%" alt="Web 截图 4">
+</p>
+
+### 移动端 PWA
+
+<p align="center">
+  <img src="docs/img/mobile/01.jpg" width="22%" alt="移动端截图 1">
+  <img src="docs/img/mobile/02.jpg" width="22%" alt="移动端截图 2">
+  <img src="docs/img/mobile/03.jpg" width="22%" alt="移动端截图 3">
+  <img src="docs/img/mobile/04.jpg" width="22%" alt="移动端截图 4">
+</p>
 
 ## 文档
 
@@ -171,8 +193,6 @@ curl -fsSL https://raw.githubusercontent.com/PiliPili-Team/gugugaga-go/main/inst
 ### 媒体服务器
 
 - [Emby API 文档](https://github.com/MediaBrowser/Emby/wiki/Api-Documentation)
-- [Jellyfin API](https://api.jellyfin.org/)
-- [Plex Webhooks](https://support.plex.tv/articles/115002267687-webhooks/)
 
 ## 贡献指南
 
