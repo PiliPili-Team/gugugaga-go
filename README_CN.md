@@ -2,8 +2,6 @@
 
 <div align="center">
 
-![GD Watcher Logo](web-src/public/pwa-icon.svg)
-
 <img src="web-src/public/pwa-icon.svg" alt="GD Watcher Logo" width="120" height="120">
 
 **实时 Google Drive 文件变更监控与自动同步系统**
