@@ -4,6 +4,8 @@
 
 ![GD Watcher Logo](web-src/public/pwa-icon.svg)
 
+<img src="web-src/public/pwa-icon.svg" alt="GD Watcher Logo" width="120" height="120">
+
 **实时 Google Drive 文件变更监控与自动同步系统**
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go)](https://golang.org/)
