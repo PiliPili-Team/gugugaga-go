@@ -13,6 +13,7 @@ import (
 	"golang.org/x/oauth2/google"
 	"golang.org/x/time/rate"
 	"google.golang.org/api/drive/v3"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 
 	"gd-webhook/src/config"
@@ -42,32 +43,32 @@ func NewDriveService(cm *config.Manager) *DriveService {
 // InitOAuthConfig loads credentials.json
 func (s *DriveService) InitOAuthConfig() error {
 	logger.Info("🔐 [InitOAuthConfig] Loading credentials from: %s", model.CredFile)
-	
+
 	// Check if file exists
 	if _, statErr := os.Stat(model.CredFile); os.IsNotExist(statErr) {
 		logger.Error("🔐 [InitOAuthConfig] File does not exist: %s", model.CredFile)
 		return statErr
 	}
-	
+
 	b, err := os.ReadFile(model.CredFile)
 	if err != nil {
 		logger.Error("🔐 [InitOAuthConfig] Failed to read file: %v", err)
 		return err
 	}
-	
+
 	logger.Info("🔐 [InitOAuthConfig] File read successfully, size: %d bytes", len(b))
-	
+
 	// Log partial content for debugging (hide sensitive data)
 	if len(b) > 0 {
 		logger.Info("🔐 [InitOAuthConfig] File content preview: %s...", string(b[:min(100, len(b))]))
 	}
-	
+
 	config, err := google.ConfigFromJSON(b, drive.DriveReadonlyScope)
 	if err != nil {
 		logger.Error("🔐 [InitOAuthConfig] Failed to parse JSON: %v", err)
 		return err
 	}
-	
+
 	s.OAuthConfig = config
 	logger.Info("🔐 [InitOAuthConfig] OAuth config loaded successfully")
 	logger.Info("🔐 [InitOAuthConfig] ClientID: %s...", config.ClientID[:min(20, len(config.ClientID))])
@@ -259,4 +260,86 @@ func (s *DriveService) SaveTokenStr(t string) {
 	if err != nil {
 		logger.Error("Failed to save StartToken: %v", err)
 	}
+}
+
+// ListFiles performs a safe, paginated, and retriable file listing
+func (s *DriveService) ListFiles(ctx context.Context, query string, fields string, targetDriveID string, handler func(*drive.File) bool) error {
+	pageToken := ""
+	cfg := s.ConfigManager.GetConfig()
+	delay := time.Duration(cfg.Google.ListDelay) * time.Millisecond
+	// User requested strict minimum 5s between requests
+	if delay < 5000*time.Millisecond {
+		delay = 5000 * time.Millisecond
+	}
+
+	for {
+		// Wait rate limit
+		s.WaitRateLimit()
+
+		// Configurable delay between pages
+		if pageToken != "" { // Don't sleep on first page
+			time.Sleep(delay)
+		}
+
+		var fileList *drive.FileList
+
+		// Execute with retry
+		err := s.retryRequest(func() error {
+			// Check context
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+
+			q := s.Srv.Files.List().
+				Q(query).
+				Fields(googleapi.Field(fields)).
+				PageSize(1000).
+				SupportsAllDrives(true).
+				IncludeItemsFromAllDrives(true)
+
+			// Apply scope
+			if targetDriveID != "" {
+				if targetDriveID == "root" {
+					// "root" (My Drive) doesn't use driveId parameter typically, but we can set Corpora
+					q.Corpora("user")
+				} else {
+					q.Corpora("drive").DriveId(targetDriveID)
+					q.IncludeItemsFromAllDrives(true) // Required for shared drives
+				}
+			}
+
+			if pageToken != "" {
+				q.PageToken(pageToken)
+			}
+
+			r, err := q.Do()
+			if err != nil {
+				return err
+			}
+			fileList = r
+			return nil
+		})
+
+		if err != nil {
+			return err
+		}
+
+		// Check for incomplete search
+		if fileList.IncompleteSearch {
+			logger.Warning("⚠️ [ListFiles] Search was incomplete! Some results may be missing.")
+		}
+
+		// Process files
+		for _, f := range fileList.Files {
+			if !handler(f) {
+				return nil // Stop requested
+			}
+		}
+
+		if fileList.NextPageToken == "" {
+			break
+		}
+		pageToken = fileList.NextPageToken
+	}
+	return nil
 }

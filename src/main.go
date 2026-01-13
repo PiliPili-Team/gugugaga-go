@@ -19,7 +19,7 @@ func main() {
 	// 2. Initialize logging
 	cfg := cfgManager.GetConfig()
 	logger.InitLogging(&cfg)
-	
+
 	// Get app name and version
 	appName := config.GetAppName()
 	appVersion := config.GetAppVersion()
@@ -68,12 +68,32 @@ func main() {
 
 	// Drive service initialization and sync loop startup
 	go func() {
-		if err := driveService.InitDriveService(); err != nil {
+		initErr := driveService.InitDriveService()
+		if initErr != nil {
 			logger.Warning("⚠️ Drive service not initialized, please login via WebUI")
-		} else {
-			logger.Verbose(1, "⏳ Preloading file tree...")
-			syncService.BuildFileTreeSkeleton(false)
-			logger.Info("✅ Preload complete (nodes: %d)", fileTree.CountNodes())
+		}
+
+		// Print available drives (Only if no targets configured)
+		if len(cfgManager.GetConfig().Google.TargetDriveIDs) == 0 {
+			drives, err := driveService.ListAllDrives()
+			if err != nil && driveService.Srv != nil {
+				logger.Warning("⚠️ Failed to list drives: %v", err)
+			} else if len(drives) > 0 {
+				logger.Info("📋 [Drive List] Found %d available drives:", len(drives))
+				for _, d := range drives {
+					logger.Info("  - Name: %-20s | ID: %s", d.Name, d.Id)
+				}
+			}
+		}
+
+		if initErr == nil {
+			logger.Verbose(1, "⏳ Loading file tree cache...")
+			if err := fileTree.Load(); err == nil {
+				logger.Info("📂 Cache loaded (nodes: %d)", fileTree.CountNodes())
+			}
+
+			// Async build/check
+			go syncService.BuildFileTreeSkeleton(false)
 
 			driveService.EnsureStartPageToken()
 			token := driveService.GetStartPageToken()

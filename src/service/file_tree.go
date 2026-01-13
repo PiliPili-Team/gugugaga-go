@@ -1,9 +1,13 @@
 package service
 
 import (
+	"bufio"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
+	"runtime"
+	"runtime/debug"
 	"sync"
 
 	"gd-webhook/src/logger"
@@ -13,54 +17,174 @@ import (
 // FileTree is the in-memory file tree structure
 type FileTree struct {
 	sync.RWMutex
-	nodes          map[string]*model.FileNode            // ID -> Node
-	children       map[string]map[string]*model.FileNode // ParentID -> ChildID -> Node
-	ds             *DriveService
-	ignoredParents map[string]bool
+	nodes    map[string]*model.FileNode            // ID -> Node
+	children map[string]map[string]*model.FileNode // ParentID -> ChildID -> Node
+	ds       *DriveService
 }
 
 // NewFileTree creates a new file tree
 func NewFileTree(ds *DriveService) *FileTree {
 	return &FileTree{
-		nodes:          make(map[string]*model.FileNode),
-		children:       make(map[string]map[string]*model.FileNode),
-		ds:             ds,
-		ignoredParents: make(map[string]bool),
+		nodes:    make(map[string]*model.FileNode),
+		children: make(map[string]map[string]*model.FileNode),
+		ds:       ds,
 	}
 }
 
-// SetIgnoredParents updates the ignore list
-func (t *FileTree) SetIgnoredParents(ids []string) {
+// SetTargetDrives updates the target drive list
+func (t *FileTree) SetTargetDrives(ids []string) {
 	t.Lock()
 	defer t.Unlock()
-	t.ignoredParents = make(map[string]bool)
-	for _, id := range ids {
-		t.ignoredParents[id] = true
-	}
 }
 
-// Save saves the file tree to disk
+// ReplaceWith atomically replaces the current tree data with another tree's data
+func (t *FileTree) ReplaceWith(other *FileTree) {
+	t.Lock()
+	other.RLock()
+	defer t.Unlock()
+	defer other.RUnlock()
+
+	// Deep copy nodes
+	t.nodes = make(map[string]*model.FileNode, len(other.nodes))
+	for k, v := range other.nodes {
+		t.nodes[k] = v
+	}
+
+	// Deep copy children
+	t.children = make(map[string]map[string]*model.FileNode, len(other.children))
+	for pID, kids := range other.children {
+		newKids := make(map[string]*model.FileNode, len(kids))
+		for k, v := range kids {
+			newKids[k] = v
+		}
+		t.children[pID] = newKids
+	}
+
+	logger.Info("🌳 Tree replaced atomically. Nodes: %d", len(t.nodes))
+}
+
+// GetNode returns a copy of the node for the given ID
+func (t *FileTree) GetNode(id string) (*model.FileNode, bool) {
+	t.RLock()
+	defer t.RUnlock()
+	if n, ok := t.nodes[id]; ok {
+		// Return copy to prevent external mutation
+		node := *n
+		return &node, true
+	}
+	return nil, false
+}
+
+// Save saves the file tree to disk (NDJSON format)
 func (t *FileTree) Save() error {
 	t.RLock()
 	defer t.RUnlock()
+	return t.saveInternal()
+}
 
-	data, err := json.Marshal(t.nodes)
-	if err != nil {
-		return err
-	}
-	// Ensure directory exists
+func (t *FileTree) saveInternal() error {
 	dir := filepath.Dir(model.TreeCacheFile)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		_ = os.MkdirAll(dir, 0755)
 	}
-	return os.WriteFile(model.TreeCacheFile, data, 0644)
+
+	tmpFile := model.TreeCacheFile + ".tmp"
+	f, err := os.Create(tmpFile)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	w := bufio.NewWriter(f)
+	enc := json.NewEncoder(w)
+
+	for _, node := range t.nodes {
+		if err := enc.Encode(node); err != nil {
+			return err
+		}
+	}
+
+	if err := w.Flush(); err != nil {
+		return err
+	}
+	f.Close()
+
+	return os.Rename(tmpFile, model.TreeCacheFile)
 }
 
-// Load loads the file tree from disk
+// Load loads the file tree from disk (Supports NDJSON and Legacy JSON)
 func (t *FileTree) Load() error {
 	t.Lock()
 	defer t.Unlock()
 
+	if err := t.loadStreaming(); err == nil {
+		return nil
+	} else {
+		logger.Warning("⚠️ Streaming load failed (%v), trying legacy format...", err)
+	}
+
+	if err := t.loadLegacy(); err != nil {
+		return err
+	}
+
+	logger.Info("🔄 Migrating legacy cache to new format...")
+	if err := t.saveInternal(); err != nil {
+		logger.Error("❌ Failed to migrate cache: %v", err)
+	} else {
+		logger.Info("✅ Cache migrated successfully!")
+	}
+
+	// Force GC to release buffer memory immediately
+	runtime.GC()
+	debug.FreeOSMemory()
+
+	return nil
+}
+
+func (t *FileTree) loadStreaming() error {
+	f, err := os.Open(model.TreeCacheFile)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Use json.Decoder for stream parsing (better handling of large tokens vs Scanner)
+	decoder := json.NewDecoder(bufio.NewReader(f))
+
+	// Pre-clear nodes
+	t.nodes = make(map[string]*model.FileNode)
+	count := 0
+
+	for decoder.More() {
+		var node model.FileNode
+		if err := decoder.Decode(&node); err != nil {
+			// If EOF or other error, break. But More() should handle logical EOF.
+			// If corruption, we might log and continue or failing.
+			// Decoder might stop on error.
+			if err == io.EOF {
+				break
+			}
+			logger.Warning("⚠️ Corrupt JSON token in cache: %v", err)
+			// Try to recover? Decoder might be stuck.
+			// Usually safe to abort streaming load and fallback if too many errors.
+			// For now, return error to trigger fallback?
+			// Or simple continue? JSON stream decoder state might be invalid.
+			return err
+		}
+		t.nodes[node.ID] = &node
+		count++
+	}
+
+	if count == 0 {
+		return os.ErrNotExist // Treat empty as not found/invalid
+	}
+
+	t.rebuildChildren()
+	logger.Info("📂 Loaded %d nodes from cache stream", count)
+	return nil
+}
+
+func (t *FileTree) loadLegacy() error {
 	data, err := os.ReadFile(model.TreeCacheFile)
 	if err != nil {
 		return err
@@ -71,6 +195,7 @@ func (t *FileTree) Load() error {
 	}
 
 	t.rebuildChildren()
+	logger.Info("📂 Loaded %d nodes from legacy cache", len(t.nodes))
 	return nil
 }
 
@@ -194,9 +319,10 @@ func (t *FileTree) GetDescendants(rootID string) []model.DescendantInfo {
 		if node, ok := t.nodes[currentID]; ok {
 			if p, ok := t.getPathLocked(currentID); ok {
 				results = append(results, model.DescendantInfo{
-					ID:    currentID,
-					Path:  p,
-					IsDir: node.IsDir,
+					ID:      currentID,
+					Path:    p,
+					IsDir:   node.IsDir,
+					DriveID: node.DriveID,
 				})
 			}
 			if kids, ok := t.children[currentID]; ok {
@@ -231,22 +357,6 @@ func (t *FileTree) ResolvePathWithFallback(id string) string {
 	pid := ""
 	if len(f.Parents) > 0 {
 		pid = f.Parents[0]
-	}
-
-	// Check ignore list: check current node first, then parent node
-	t.RLock()
-	isCurrentIgnored := t.ignoredParents[id]  // Check current node
-	isParentIgnored := t.ignoredParents[pid]  // Check parent node
-	t.RUnlock()
-
-	if isCurrentIgnored {
-		logger.Verbose(model.LogLevelInfo, "🚫 [Ignore] Skipping node %s (self ignored: %s)", f.Name, id)
-		return ""
-	}
-
-	if isParentIgnored {
-		logger.Verbose(model.LogLevelInfo, "🚫 [Ignore] Skipping node %s (parent ignored: %s)", f.Name, pid)
-		return ""
 	}
 
 	t.UpdateNode(id, f.Name, pid, f.MimeType == "application/vnd.google-apps.folder", f.DriveId)

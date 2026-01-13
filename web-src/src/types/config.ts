@@ -49,7 +49,9 @@ export interface ServerConfig {
 export interface GoogleConfig {
   qps: number
   personal_drive_name: string
-  ignored_parent_ids: string[]
+  target_drive_ids: string[]
+  list_delay: number
+  batch_sleep_interval: number
 }
 
 export interface RcloneConfig {

@@ -140,6 +140,15 @@ func (m *Manager) LoadConfig() {
 		m.Cfg.Symedia.Timeout = 120
 	}
 
+	// Set defaults for Google ListDelay (Min 1000ms)
+	if m.Cfg.Google.ListDelay < 1000 {
+		m.Cfg.Google.ListDelay = 1000
+	}
+	// Strict: BatchSleepInterval (Min 300s)
+	if m.Cfg.Google.BatchSleepInterval < 300 {
+		m.Cfg.Google.BatchSleepInterval = 300
+	}
+
 	// Set defaults for Rclone timeouts (Default 60s, Max 120s)
 	for i := range m.Cfg.Rclone {
 		if m.Cfg.Rclone[i].Timeout <= 0 {
@@ -213,6 +222,9 @@ func (m *Manager) UpdateConfig(newCfg model.Config) {
 		if newCfg.Rclone[i].Timeout > 120 {
 			newCfg.Rclone[i].Timeout = 120
 		}
+	}
+	if newCfg.Google.ListDelay < 1000 {
+		newCfg.Google.ListDelay = 1000
 	}
 
 	*m.Cfg = newCfg

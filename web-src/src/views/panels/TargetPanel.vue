@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * IgnorePanel - Ignored Parent IDs Configuration
+ * TargetPanel - Target Drives Configuration
  */
 
 import { ref, computed, onMounted } from 'vue'
@@ -10,14 +10,14 @@ import { EyeOff, Plus, Trash2, Save, Loader2, Edit3, Check, X } from 'lucide-vue
 
 const { t } = useI18n()
 const configStore = useConfigStore()
-const newParentId = ref('')
+const newDriveId = ref('')
 const newNote = ref('')
 const isSaving = ref(false)
 const editingId = ref<string | null>(null)
 const editingNote = ref('')
 
 // 从 localStorage 获取备注
-const NOTES_KEY = 'gd_ignored_parent_notes'
+const NOTES_KEY = 'gd_target_drive_notes'
 
 function getNotes(): Record<string, string> {
   try {
@@ -35,7 +35,7 @@ const notes = ref<Record<string, string>>(getNotes())
 
 // 带备注的ID列表
 const idsWithNotes = computed(() => {
-  const ids = configStore.config?.google?.ignored_parent_ids || []
+  const ids = configStore.config?.google?.target_drive_ids || []
   return ids.map(id => ({
     id,
     note: notes.value[id] || ''
@@ -51,17 +51,17 @@ async function handleSave() {
   }
 }
 
-function addParentId() {
-  if (!newParentId.value.trim()) return
+function addDriveId() {
+  if (!newDriveId.value.trim()) return
   
-  const current = configStore.config?.google?.ignored_parent_ids || []
-  const idToAdd = newParentId.value.trim()
+  const current = configStore.config?.google?.target_drive_ids || []
+  const idToAdd = newDriveId.value.trim()
   
   if (current.includes(idToAdd)) {
     return
   }
   
-  configStore.updateNested('google.ignored_parent_ids', [...current, idToAdd])
+  configStore.updateNested('google.target_drive_ids', [...current, idToAdd])
   
   // 保存备注
   if (newNote.value.trim()) {
@@ -69,13 +69,13 @@ function addParentId() {
     saveNotes(notes.value)
   }
   
-  newParentId.value = ''
+  newDriveId.value = ''
   newNote.value = ''
 }
 
-function removeParentId(id: string) {
-  const current = configStore.config?.google?.ignored_parent_ids || []
-  configStore.updateNested('google.ignored_parent_ids', current.filter(i => i !== id))
+function removeDriveId(id: string) {
+  const current = configStore.config?.google?.target_drive_ids || []
+  configStore.updateNested('google.target_drive_ids', current.filter(i => i !== id))
   
   // 删除备注
   delete notes.value[id]
@@ -108,7 +108,7 @@ function cancelEditNote() {
 function handleKeyDown(e: KeyboardEvent) {
   if (e.key === 'Enter') {
     e.preventDefault()
-    addParentId()
+    addDriveId()
   }
 }
 
@@ -135,19 +135,19 @@ onMounted(() => {
           <div class="add-row">
             <input
               type="text"
-              v-model="newParentId"
+              v-model="newDriveId"
               class="input mono"
-              :placeholder="t('panels.ignore.placeholder')"
+              :placeholder="t('panels.target.placeholder')"
               @keydown="handleKeyDown"
             />
             <input
               type="text"
               v-model="newNote"
               class="input note-input"
-              :placeholder="t('panels.ignore.notePlaceholder')"
+              :placeholder="t('panels.target.notePlaceholder')"
               @keydown="handleKeyDown"
             />
-            <button class="btn btn-primary" @click="addParentId" :disabled="!newParentId.trim()">
+            <button class="btn btn-primary" @click="addDriveId" :disabled="!newDriveId.trim()">
               <Plus :size="16" />
               <span>{{ t('common.add') }}</span>
             </button>
@@ -170,7 +170,7 @@ onMounted(() => {
                     type="text"
                     v-model="editingNote"
                     class="input note-edit-input"
-                    :placeholder="t('panels.ignore.notePlaceholder')"
+                    :placeholder="t('panels.target.notePlaceholder')"
                     @keydown="handleNoteKeyDown"
                     autofocus
                   />
@@ -184,11 +184,11 @@ onMounted(() => {
                 <!-- 显示备注 -->
                 <div v-else class="note-display" @click="startEditNote(item.id)">
                   <span v-if="item.note" class="note-text">{{ item.note }}</span>
-                  <span v-else class="note-placeholder">{{ t('panels.ignore.addNote') }}</span>
+                  <span v-else class="note-placeholder">{{ t('panels.target.addNote') }}</span>
                   <Edit3 :size="12" class="edit-icon" />
                 </div>
               </div>
-              <button class="remove-btn" @click="removeParentId(item.id)">
+              <button class="remove-btn" @click="removeDriveId(item.id)">
                 <Trash2 :size="14" />
               </button>
             </div>
@@ -197,8 +197,8 @@ onMounted(() => {
           <!-- Empty state -->
           <div v-if="!idsWithNotes.length" class="empty-state">
             <EyeOff :size="32" />
-            <p>{{ t('panels.ignore.empty') }}</p>
-            <span class="hint">{{ t('panels.ignore.emptyHint') }}</span>
+            <p>{{ t('panels.target.empty') }}</p>
+            <span class="hint">{{ t('panels.target.emptyHint') }}</span>
           </div>
         </div>
 

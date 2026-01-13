@@ -108,6 +108,32 @@ function updateSymediaHeaderKey(oldKey: string, newKey: string) {
           </div>
 
           <div class="form-group">
+            <label>{{ t('panels.integrations.listDelay') }} (ms)</label>
+            <input
+              type="number"
+              class="input"
+              :value="configStore.config?.google?.list_delay || 1000"
+              @change="updateConfig('google.list_delay', Math.max(1000, Number(($event.target as HTMLInputElement).value)))"
+              min="1000"
+              step="100"
+            />
+            <span class="hint">{{ t('panels.integrations.listDelayHint') }}</span>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ t('panels.integrations.batchSleepInterval') }}</label>
+            <input
+              type="number"
+              class="input"
+              :value="configStore.config?.google?.batch_sleep_interval || 300"
+              @change="updateConfig('google.batch_sleep_interval', Math.max(300, Number(($event.target as HTMLInputElement).value)))"
+              min="300"
+              step="60"
+            />
+            <span class="hint">{{ t('panels.integrations.batchSleepHint') }}</span>
+          </div>
+
+          <div class="form-group">
             <label>{{ t('panels.integrations.personalDriveName') }}</label>
             <input
               type="text"

@@ -24,7 +24,7 @@ export default {
     basic: '基础设置',
     integrations: '服务集成',
     mappings: '路径映射',
-    ignore: '忽略配置',
+    target: '关注列表',
     advanced: '高级设置',
     oauth: 'OAuth认证',
     logs: '实时日志',
@@ -168,7 +168,11 @@ export default {
       googleDrive: 'Google Drive',
       qps: 'API QPS',
       qpsHint: '每秒 API 请求限制',
+      listDelay: '前台分页请求间隔 (ms)',
+      listDelayHint: '列表请求延迟 (毫秒)，最小 1000ms',
       learnMore: '了解更多',
+      batchSleepInterval: '防风控暂停间隔 (秒)',
+      batchSleepHint: '每扫描 1000 个文件暂停的时间，最小 300 秒 (5分钟)，用于防止 Google API 封禁',
       personalDriveName: '个人盘名称',
       personalDriveNamePlaceholder: '我的云端硬盘',
       rclone: 'Rclone 实例',
@@ -198,14 +202,13 @@ export default {
       rcloneMappingsDesc: '将 Google Drive 路径转换为 Rclone VFS 路径'
     },
 
-    ignore: {
-      title: '忽略配置',
-      description: '配置需要忽略的 Google Drive 文件夹',
-      placeholder: '输入 Google Drive 文件夹 ID',
-      notePlaceholder: '添加备注（可选）',
-      addNote: '点击添加备注',
-      empty: '未配置忽略规则',
-      emptyHint: '添加文件夹 ID 以忽略其中的文件变更'
+    target: {
+      placeholder: '输入 Google Drive 文件夹/盘 ID (例如: 0ABC...)',
+      notePlaceholder: '备注 (可选)',
+      addNote: '添加备注',
+      empty: '暂无关注列表',
+      emptyHint: '未配置时默认扫描所有内容。添加 ID 后，系统将仅扫描列表中的文件夹。',
+      title: '关注盘列表'
     },
 
     advanced: {

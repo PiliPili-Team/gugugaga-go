@@ -29,7 +29,7 @@ func NewSymediaService(cm *config.Manager) *SymediaService {
 }
 
 // SendWebhook sends a webhook notification
-func (s *SymediaService) SendWebhook(originPath, action string, isDir bool) {
+func (s *SymediaService) SendWebhook(originPath, action string, isDir bool, driveID string) {
 	s.ConfigManager.Lock.RLock()
 	regexRules := s.ConfigManager.SARegexRules
 	cfg := s.ConfigManager.Cfg
@@ -65,10 +65,17 @@ func (s *SymediaService) SendWebhook(originPath, action string, isDir bool) {
 	u, _ := url.Parse(fullURL)
 	q := u.Query()
 
+	// Format Drive ID for display
+	displayDriveID := driveID
+	if displayDriveID == "" || displayDriveID == "root" {
+		displayDriveID = "My Drive"
+	}
+
 	replacements := map[string]interface{}{
 		"{{FILE_PATH}}": finalPath,
 		"{{ACTION}}":    action,
 		"{{IS_DIR}}":    isDir,
+		"{{DRIVE_ID}}":  displayDriveID,
 	}
 
 	// Process template in query parameters

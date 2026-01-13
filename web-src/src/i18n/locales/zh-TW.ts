@@ -19,7 +19,7 @@ export default {
     basic: '基礎設定',
     integrations: '服務整合',
     mappings: '路徑對映',
-    ignore: '忽略設定',
+    target: '關注列表',
     advanced: '進階設定',
     oauth: 'OAuth認證',
     logs: '即時日誌',
@@ -152,6 +152,11 @@ export default {
       googleDrive: 'Google Drive',
       qps: 'API QPS',
       qpsHint: '每秒 API 請求限制',
+      listDelay: '前台分頁請求間隔 (ms)',
+      listDelayHint: '列表請求延遲 (毫秒)，最小 1000ms',
+      learnMore: '了解更多',
+      batchSleepInterval: '防風控暫停間隔 (秒)',
+      batchSleepHint: '每掃描 1000 個檔案暫停的時間，最小 300 秒 (5分鐘)，用於防止 Google API 封禁',
       personalDriveName: '個人雲端硬碟名稱',
       personalDriveNamePlaceholder: '我的雲端硬碟',
       rclone: 'Rclone 實例',
@@ -181,12 +186,14 @@ export default {
       rcloneMappingsDesc: '將 Google Drive 路徑轉換為 Rclone VFS 路徑'
     },
 
-    ignore: {
-      title: '忽略設定',
-      description: '設定需要忽略的 Google Drive 資料夾',
-      placeholder: '輸入 Google Drive 資料夾 ID',
-      empty: '未設定忽略規則',
-      emptyHint: '新增資料夾 ID 以忽略其中的檔案變更'
+    target: {
+      title: '關注盤列表',
+      description: '設定需要關注的 Google Drive 資料夾/磁碟',
+      placeholder: '輸入 Google Drive 資料夾/磁碟 ID (例如: 0ABC...)',
+      notePlaceholder: '備註 (可選)',
+      addNote: '新增備註',
+      empty: '暫無關注列表',
+      emptyHint: '未配置時預設掃描所有內容。新增 ID 後，系統將僅掃描列表中的資料夾。'
     },
 
     advanced: {

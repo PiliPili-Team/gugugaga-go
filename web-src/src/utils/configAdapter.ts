@@ -39,7 +39,11 @@ interface BackendConfig {
   }
   google: {
     rate_limit_qps: number
+    personal_drive_name?: string
     my_drive_name?: string
+    target_drive_ids?: string[]
+    list_delay?: number
+    batch_sleep_interval?: number
     ignored_parents?: string[]
   }
   rclone?: Array<{
@@ -104,7 +108,9 @@ export function adaptBackendConfig(backend: BackendConfig): Config {
     google: {
       qps: backend.google?.rate_limit_qps ?? 5,
       personal_drive_name: backend.google?.personal_drive_name || backend.google?.my_drive_name || '',
-      ignored_parent_ids: backend.google?.ignored_parent_ids || backend.google?.ignored_parents || []
+      target_drive_ids: backend.google?.target_drive_ids || [],
+      list_delay: backend.google?.list_delay ?? 1000,
+      batch_sleep_interval: backend.google?.batch_sleep_interval ?? 300
     },
     rclone: {
       instances: (backend.rclone || []).map(instance => ({
@@ -119,10 +125,10 @@ export function adaptBackendConfig(backend: BackendConfig): Config {
     symedia: {
       host: backend.symedia?.host ?? '',
       endpoint: backend.symedia?.endpoint ?? '',
-      body_template: backend.symedia?.body_template 
-        ? (typeof backend.symedia.body_template === 'string' 
-            ? backend.symedia.body_template 
-            : JSON.stringify(backend.symedia.body_template))
+      body_template: backend.symedia?.body_template
+        ? (typeof backend.symedia.body_template === 'string'
+          ? backend.symedia.body_template
+          : JSON.stringify(backend.symedia.body_template))
         : '',
       path_mappings: (backend.path_mapping || []).map(m => ({
         regex: m.regex ?? '',
@@ -170,8 +176,10 @@ export function adaptFrontendConfig(frontend: Config): BackendConfig {
     },
     google: {
       rate_limit_qps: frontend.google.qps,
-      my_drive_name: frontend.google.personal_drive_name,
-      ignored_parents: frontend.google.ignored_parent_ids
+      personal_drive_name: frontend.google.personal_drive_name,
+      target_drive_ids: frontend.google.target_drive_ids || [],
+      list_delay: frontend.google.list_delay || 1000,
+      batch_sleep_interval: frontend.google.batch_sleep_interval || 300
     },
     rclone: frontend.rclone.instances.map((instance, index) => ({
       name: `instance_${index}`,
@@ -183,7 +191,7 @@ export function adaptFrontendConfig(frontend: Config): BackendConfig {
       host: frontend.symedia.host,
       endpoint: frontend.symedia.endpoint,
       notify_unmatched: frontend.symedia.notify_unmatched,
-      body_template: frontend.symedia.body_template 
+      body_template: frontend.symedia.body_template
         ? JSON.parse(frontend.symedia.body_template)
         : {},
       headers: frontend.symedia.headers || {}

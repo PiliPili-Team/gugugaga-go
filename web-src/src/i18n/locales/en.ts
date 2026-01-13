@@ -24,7 +24,7 @@ export default {
     basic: 'Basic Settings',
     integrations: 'Integrations',
     mappings: 'Path Mappings',
-    ignore: 'Ignore Rules',
+    target: 'Targets',
     advanced: 'Advanced',
     oauth: 'OAuth',
     logs: 'Live Logs',
@@ -170,7 +170,11 @@ export default {
       googleDrive: 'Google Drive',
       qps: 'API QPS',
       qpsHint: 'API requests per second limit',
+      listDelay: 'List Request Delay (ms)',
+      listDelayHint: 'Delay between list requests (ms), min 1000ms',
       learnMore: 'Learn more',
+      batchSleepInterval: 'Anti-Ban Pause Interval (s)',
+      batchSleepHint: 'Pause time every 1000 items, min 300s (5 min), to prevent Google API bans',
       personalDriveName: 'Personal Drive Name',
       personalDriveNamePlaceholder: 'My Drive',
       rclone: 'Rclone Instances',
@@ -200,14 +204,13 @@ export default {
       rcloneMappingsDesc: 'Transform Google Drive paths to Rclone VFS paths'
     },
 
-    ignore: {
-      title: 'Ignore Rules',
-      description: 'Configure Google Drive folders to ignore',
-      placeholder: 'Enter Google Drive folder ID',
-      notePlaceholder: 'Add note (optional)',
-      addNote: 'Click to add note',
-      empty: 'No ignore rules configured',
-      emptyHint: 'Add folder IDs to ignore file changes within them'
+    target: {
+      placeholder: 'Enter Google Drive Folder/Drive ID (e.g. 0ABC...)',
+      notePlaceholder: 'Note (Optional)',
+      addNote: 'Add Note',
+      empty: 'No target drives configured',
+      emptyHint: 'Scanning everything by default. Add IDs to scan ONLY specific locations.',
+      title: 'Target Drives'
     },
 
     advanced: {

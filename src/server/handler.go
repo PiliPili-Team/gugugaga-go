@@ -9,9 +9,11 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -33,6 +35,7 @@ type Handler struct {
 	Rclone        *service.RcloneService
 	Symedia       *service.SymediaService
 	Middleware    *Middleware
+	TotalMemory   uint64
 }
 
 // NewHandler creates a Handler instance
@@ -49,7 +52,20 @@ func NewHandler(
 		Sync:          ss,
 		Rclone:        rc,
 		Symedia:       sy,
+		TotalMemory:   getTotalMemory(),
 	}
+}
+
+func getTotalMemory() uint64 {
+	// Mac implementation
+	out, err := exec.Command("sysctl", "-n", "hw.memsize").Output()
+	if err == nil {
+		s := strings.TrimSpace(string(out))
+		if v, err := strconv.ParseUint(s, 10, 64); err == nil {
+			return v
+		}
+	}
+	return 0
 }
 
 // SetMiddleware sets middleware reference (for session access)
@@ -160,7 +176,7 @@ func (h *Handler) HandleBingWallpaper(w http.ResponseWriter, r *http.Request) {
 	if len(hdURL) > 0 {
 		hdURL = "https://www.bing.com" + hdURL + "&w=1920&h=1080&rs=1&c=4"
 	}
-	
+
 	result := map[string]string{
 		"url":       hdURL,
 		"copyright": img.Copyright,
@@ -177,7 +193,7 @@ func (h *Handler) HandleBingWallpaper(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) HandleTMDBWallpaper(w http.ResponseWriter, r *http.Request) {
 	// TMDB API - Get trending
 	tmdbAPI := "https://api.themoviedb.org/3/trending/all/day?language=zh-CN"
-	
+
 	// Use free API key (TMDB official example)
 	apiKey := "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0MzE5YTBjYjlhMGJjZGY5ZjZhZjA2ZWY2OWVmMWU5YiIsIm5iZiI6MTczOTU0MjQyMC44MzUsInN1YiI6IjY3YWVjMzc0YjJhNDVlNmJmNzExNTFkYiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.Y-_mEy0-5jqwb3D9VJ7FqvuA4G6o_eGHr6fmvYEPcqQ"
 
@@ -205,11 +221,11 @@ func (h *Handler) HandleTMDBWallpaper(w http.ResponseWriter, r *http.Request) {
 
 	var tmdbResp struct {
 		Results []struct {
-			BackdropPath  string  `json:"backdrop_path"`
-			Title         string  `json:"title"`
-			Name          string  `json:"name"`
-			Overview      string  `json:"overview"`
-			VoteAverage   float64 `json:"vote_average"`
+			BackdropPath string  `json:"backdrop_path"`
+			Title        string  `json:"title"`
+			Name         string  `json:"name"`
+			Overview     string  `json:"overview"`
+			VoteAverage  float64 `json:"vote_average"`
 		} `json:"results"`
 	}
 
@@ -220,25 +236,25 @@ func (h *Handler) HandleTMDBWallpaper(w http.ResponseWriter, r *http.Request) {
 
 	// Randomly select a result with backdrop
 	var validResults []struct {
-		BackdropPath  string
-		Title         string
-		Name          string
-		Overview      string
-		VoteAverage   float64
+		BackdropPath string
+		Title        string
+		Name         string
+		Overview     string
+		VoteAverage  float64
 	}
-	
+
 	for _, r := range tmdbResp.Results {
 		if r.BackdropPath != "" {
 			validResults = append(validResults, struct {
-				BackdropPath  string
-				Title         string
-				Name          string
-				Overview      string
-				VoteAverage   float64
+				BackdropPath string
+				Title        string
+				Name         string
+				Overview     string
+				VoteAverage  float64
 			}{r.BackdropPath, r.Title, r.Name, r.Overview, r.VoteAverage})
 		}
 	}
-	
+
 	if len(validResults) == 0 {
 		http.Error(w, "No valid backdrop found", http.StatusNotFound)
 		return
@@ -247,13 +263,13 @@ func (h *Handler) HandleTMDBWallpaper(w http.ResponseWriter, r *http.Request) {
 	// Random selection
 	rand.Seed(time.Now().UnixNano())
 	selected := validResults[rand.Intn(len(validResults))]
-	
+
 	// Build HD image URL (original size)
 	title := selected.Title
 	if title == "" {
 		title = selected.Name
 	}
-	
+
 	result := map[string]interface{}{
 		"url":       "https://image.tmdb.org/t/p/original" + selected.BackdropPath,
 		"copyright": title,
@@ -269,13 +285,13 @@ func (h *Handler) HandleTMDBWallpaper(w http.ResponseWriter, r *http.Request) {
 // HandleSystemStatus returns system status
 func (h *Handler) HandleSystemStatus(w http.ResponseWriter, r *http.Request) {
 	uptime := time.Since(serverStartTime)
-	
+
 	// Format uptime
 	days := int(uptime.Hours()) / 24
 	hours := int(uptime.Hours()) % 24
 	minutes := int(uptime.Minutes()) % 60
 	seconds := int(uptime.Seconds()) % 60
-	
+
 	var uptimeStr string
 	if days > 0 {
 		uptimeStr = fmt.Sprintf("%dd %dh %dm", days, hours, minutes)
@@ -286,48 +302,51 @@ func (h *Handler) HandleSystemStatus(w http.ResponseWriter, r *http.Request) {
 	} else {
 		uptimeStr = fmt.Sprintf("%ds", seconds)
 	}
-	
+
 	// Get task statistics
 	var taskStats service.TaskStats
 	if h.Sync != nil {
 		taskStats = h.Sync.GetTaskStats()
 	}
-	
+
 	// Get memory statistics
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	
-	// Calculate memory usage percentage (Alloc / Sys)
+
+	// Calculate memory usage percentage (Process Sys / Machine Total)
 	memUsage := 0.0
-	if memStats.Sys > 0 {
+	if h.TotalMemory > 0 {
+		memUsage = float64(memStats.Sys) / float64(h.TotalMemory) * 100
+	} else if memStats.Sys > 0 {
+		// Fallback: Alloc / Sys
 		memUsage = float64(memStats.Alloc) / float64(memStats.Sys) * 100
 	}
-	
+
 	// Get goroutine count as a proxy for CPU activity
 	numGoroutines := runtime.NumGoroutine()
 	numCPU := runtime.NumCPU()
-	
+
 	// Estimate CPU usage based on goroutine activity (simplified)
 	// This is not real CPU usage, just an estimation
 	cpuUsage := float64(numGoroutines) / float64(numCPU*100) * 100
 	if cpuUsage > 100 {
 		cpuUsage = 100
 	}
-	
+
 	result := map[string]interface{}{
-		"status":                   "online",
-		"uptime_seconds":           int64(uptime.Seconds()),
-		"uptime_display":           uptimeStr,
-		"start_time":               serverStartTime.Format(time.RFC3339),
-		"app_name":                 config.GetAppName(),
-		"app_version":              config.GetAppVersion(),
-		"today_completed_tasks":    taskStats.TodayCompletedTasks,
-		"history_completed_tasks":  taskStats.HistoryCompletedTasks,
-		"cpu_usage":                cpuUsage,
-		"memory_usage":             memUsage,
-		"memory_alloc_mb":          float64(memStats.Alloc) / 1024 / 1024,
-		"memory_sys_mb":            float64(memStats.Sys) / 1024 / 1024,
-		"goroutines":               numGoroutines,
+		"status":                  "online",
+		"uptime_seconds":          int64(uptime.Seconds()),
+		"uptime_display":          uptimeStr,
+		"start_time":              serverStartTime.Format(time.RFC3339),
+		"app_name":                config.GetAppName(),
+		"app_version":             config.GetAppVersion(),
+		"today_completed_tasks":   taskStats.TodayCompletedTasks,
+		"history_completed_tasks": taskStats.HistoryCompletedTasks,
+		"cpu_usage":               cpuUsage,
+		"memory_usage":            memUsage,
+		"memory_alloc_mb":         float64(memStats.Alloc) / 1024 / 1024,
+		"memory_sys_mb":           float64(memStats.Sys) / 1024 / 1024,
+		"goroutines":              numGoroutines,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -488,7 +507,7 @@ func (h *Handler) HandleTestSymedia(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 			return
 		}
-		go h.Symedia.SendWebhook(p.Path, "create", false)
+		go h.Symedia.SendWebhook(p.Path, "create", false, "")
 		_, _ = w.Write([]byte("ok"))
 	}
 }
@@ -520,7 +539,7 @@ func (h *Handler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 // HandleOAuthLoginURL returns OAuth login URL
 func (h *Handler) HandleOAuthLoginURL(w http.ResponseWriter, r *http.Request) {
 	logger.Info("🔗 [OAuth] GetLoginURL request received")
-	
+
 	if h.DriveInfo.OAuthConfig == nil {
 		logger.Info("🔗 [OAuth] OAuthConfig is nil, attempting to load...")
 		err := h.DriveInfo.InitOAuthConfig()
@@ -533,11 +552,11 @@ func (h *Handler) HandleOAuthLoginURL(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	
+
 	logger.Info("🔗 [OAuth] Generating auth URL...")
 	authLoginUrl := h.DriveInfo.OAuthConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	logger.Info("🔗 [OAuth] Auth URL generated successfully (length: %d)", len(authLoginUrl))
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(model.OAuthLoginURLResponse{URL: authLoginUrl})
 }

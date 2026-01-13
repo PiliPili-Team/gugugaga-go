@@ -84,7 +84,7 @@ const formattedMemoryUsage = computed(() => formatPercent(memoryUsage.value))
 // Start polling
 onMounted(() => {
   fetchStatus()
-  pollInterval = window.setInterval(fetchStatus, 30000) // Update every 30 seconds
+  pollInterval = window.setInterval(fetchStatus, 3000) // Update every 3 seconds
 })
 
 onUnmounted(() => {

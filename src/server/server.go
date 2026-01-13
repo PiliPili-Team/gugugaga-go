@@ -54,7 +54,7 @@ func (s *Server) Start() {
 	// Wallpaper API
 	mux.HandleFunc("/api/bing/wallpaper", s.Handler.HandleBingWallpaper)
 	mux.HandleFunc("/api/tmdb/wallpaper", s.Handler.HandleTMDBWallpaper)
-	
+
 	// System status API
 	mux.HandleFunc("/api/status", s.Handler.HandleSystemStatus)
 

@@ -48,6 +48,13 @@ type Config struct {
 		LogCleanupEnabled bool   `json:"log_cleanup_enabled"` // Enable/disable
 		LogRetentionDays  int    `json:"log_retention_days"`  // Retention days
 		LogCleanupCron    string `json:"log_cleanup_cron"`    // Cron expression
+
+		// Task statistics persistence
+		TaskStats struct {
+			TodayCompleted   int64  `json:"today_completed"`
+			HistoryCompleted int64  `json:"history_completed"`
+			LastResetDate    string `json:"last_reset_date"`
+		} `json:"task_stats"`
 	} `json:"advanced"`
 
 	Server struct {
@@ -63,9 +70,11 @@ type Config struct {
 	} `json:"server"`
 
 	Google struct {
-		RateLimitQPS      int      `json:"rate_limit_qps"`
-		PersonalDriveName string   `json:"personal_drive_name"`
-		IgnoredParents    []string `json:"ignored_parents"`
+		RateLimitQPS       int      `json:"rate_limit_qps"`
+		PersonalDriveName  string   `json:"personal_drive_name"`
+		TargetDriveIDs     []string `json:"target_drive_ids"`     // Target Team Drive IDs
+		ListDelay          int      `json:"list_delay"`           // Milliseconds, min 1000
+		BatchSleepInterval int      `json:"batch_sleep_interval"` // Sleep seconds every 1000 items
 	} `json:"google"`
 
 	Rclone  []RcloneInstance `json:"rclone"`
@@ -121,9 +130,10 @@ type FileNode struct {
 
 // DescendantInfo contains traversal result information
 type DescendantInfo struct {
-	ID    string
-	Path  string
-	IsDir bool
+	ID      string
+	Path    string
+	IsDir   bool
+	DriveID string
 }
 
 // ================= API Models =================

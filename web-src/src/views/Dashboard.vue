@@ -41,7 +41,7 @@ import DashboardPanel from './panels/DashboardPanel.vue'
 import BasicPanel from './panels/BasicPanel.vue'
 import IntegrationsPanel from './panels/IntegrationsPanel.vue'
 import MappingsPanel from './panels/MappingsPanel.vue'
-import IgnorePanel from './panels/IgnorePanel.vue'
+import TargetPanel from './panels/TargetPanel.vue'
 import AdvancedPanel from './panels/AdvancedPanel.vue'
 import OAuthPanel from './panels/OAuthPanel.vue'
 
@@ -270,7 +270,7 @@ const navItems = computed(() => [
   { id: 'basic', icon: Server, label: t('nav.basic') },
   { id: 'integrations', icon: Puzzle, label: t('nav.integrations') },
   { id: 'mappings', icon: Route, label: t('nav.mappings') },
-  { id: 'ignore', icon: EyeOff, label: t('nav.ignore') },
+  { id: 'target', icon: HardDrive, label: t('nav.target') }, // EyeOff -> HardDrive, ignore -> target
   { id: 'advanced', icon: Settings, label: t('nav.advanced') },
   { id: 'oauth', icon: Key, label: t('nav.oauth') }
 ])
@@ -288,11 +288,13 @@ const mobileTabMainItems = computed(() => [
   { id: 'actions', icon: Zap, label: t('nav.actions') }
 ])
 
+
+
 // Mobile TabBar more items
 const mobileTabMoreItems = computed(() => [
   { id: 'integrations', icon: Puzzle, label: t('nav.integrations') },
   { id: 'mappings', icon: Route, label: t('nav.mappings') },
-  { id: 'ignore', icon: EyeOff, label: t('nav.ignore') },
+  { id: 'target', icon: EyeOff, label: t('nav.target') }, // Changed from ignore
   { id: 'advanced', icon: Settings, label: t('nav.advanced') },
   { id: 'oauth', icon: Key, label: t('nav.oauth') }
 ])
@@ -327,6 +329,8 @@ const currentPageTitle = computed(() => {
   return currentItem?.label || t('nav.dashboard')
 })
 
+// ...
+
 // Current panel component
 const currentPanel = computed(() => {
   const panels: Record<string, any> = {
@@ -334,7 +338,7 @@ const currentPanel = computed(() => {
     basic: BasicPanel,
     integrations: IntegrationsPanel,
     mappings: MappingsPanel,
-    ignore: IgnorePanel,
+    target: TargetPanel, // Changed from ignore
     advanced: AdvancedPanel,
     oauth: OAuthPanel,
     logs: LogViewer,

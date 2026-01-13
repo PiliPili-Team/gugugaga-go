@@ -1,6 +1,10 @@
 package service
 
 import (
+	"bufio"
+	"context"
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -12,6 +16,7 @@ import (
 	"gd-webhook/src/model"
 
 	"google.golang.org/api/drive/v3"
+	"google.golang.org/api/googleapi"
 )
 
 // SyncService is the core synchronization logic service
@@ -22,26 +27,16 @@ type SyncService struct {
 	Rclone        *RcloneService
 	Symedia       *SymediaService
 	TriggerChan   chan struct{}
-	
+
 	// Task statistics
 	mu                    sync.RWMutex
-	activeTasks           int64     // Active task count
-	todayCompletedTasks   int64     // Today's completed task count
-	historyCompletedTasks int64     // Historical completed task count (total)
-	lastResetDate         string    // Last date for daily counter reset
-	isProcessing          bool      // Whether processing a task
-}
+	activeTasks           int64  // Active task count
+	todayCompletedTasks   int64  // Today's completed task count
+	historyCompletedTasks int64  // Historical completed task count (total)
+	lastResetDate         string // Last date for daily counter reset
+	isProcessing          bool   // Whether processing a task
 
-// isIgnoredParent checks if parent folder ID is in ignore list
-func (s *SyncService) isIgnoredParent(parentID string) bool {
-	s.ConfigManager.Lock.RLock()
-	defer s.ConfigManager.Lock.RUnlock()
-	for _, id := range s.ConfigManager.Cfg.Google.IgnoredParents {
-		if id == parentID {
-			return true
-		}
-	}
-	return false
+	buildMu sync.Mutex // Mutex for BuildFileTreeSkeleton
 }
 
 // NewSyncService creates a new sync service
@@ -52,18 +47,30 @@ func NewSyncService(
 	rc *RcloneService,
 	sy *SymediaService,
 ) *SyncService {
-	// Initialize ignore list
-	if cm.Cfg.Google.IgnoredParents != nil {
-		tree.SetIgnoredParents(cm.Cfg.Google.IgnoredParents)
+	// Load persisted task stats from config
+	cm.Lock.RLock()
+	todayCompleted := cm.Cfg.Advanced.TaskStats.TodayCompleted
+	historyCompleted := cm.Cfg.Advanced.TaskStats.HistoryCompleted
+	lastResetDate := cm.Cfg.Advanced.TaskStats.LastResetDate
+	cm.Lock.RUnlock()
+
+	// Check if we need to reset today's counter (new day)
+	today := time.Now().Format("2006-01-02")
+	if lastResetDate != today {
+		todayCompleted = 0
+		lastResetDate = today
 	}
 
 	return &SyncService{
-		ConfigManager: cm,
-		DriveInfo:     ds,
-		Tree:          tree,
-		Rclone:        rc,
-		Symedia:       sy,
-		TriggerChan:   make(chan struct{}, 20),
+		ConfigManager:         cm,
+		DriveInfo:             ds,
+		Tree:                  tree,
+		Rclone:                rc,
+		Symedia:               sy,
+		TriggerChan:           make(chan struct{}, 20),
+		todayCompletedTasks:   todayCompleted,
+		historyCompletedTasks: historyCompleted,
+		lastResetDate:         lastResetDate,
 	}
 }
 
@@ -90,132 +97,212 @@ func (s *SyncService) StartProcessLoop() {
 				break drain
 			}
 		}
-		
+
 		// Mark task as started
 		s.mu.Lock()
 		s.isProcessing = true
 		s.activeTasks = 1 // Currently processing 1 task
 		s.mu.Unlock()
-		
+
 		// Execute sync
 		s.SyncOnce()
-		
+
 		// Mark task as completed
 		s.mu.Lock()
 		s.isProcessing = false
 		s.activeTasks = 0 // Task complete, no active tasks
-		
+
 		// Check if we need to reset today's counter (new day)
 		today := time.Now().Format("2006-01-02")
 		if s.lastResetDate != today {
 			s.todayCompletedTasks = 0
 			s.lastResetDate = today
 		}
-		
+
 		// Increment counters
 		s.todayCompletedTasks++
 		s.historyCompletedTasks++
+
+		// Persist stats to config
+		s.ConfigManager.Lock.Lock()
+		s.ConfigManager.Cfg.Advanced.TaskStats.TodayCompleted = s.todayCompletedTasks
+		s.ConfigManager.Cfg.Advanced.TaskStats.HistoryCompleted = s.historyCompletedTasks
+		s.ConfigManager.Cfg.Advanced.TaskStats.LastResetDate = s.lastResetDate
+		s.ConfigManager.Lock.Unlock()
+
+		// Save config asynchronously to avoid blocking
+		go s.ConfigManager.SaveConfig()
+
 		s.mu.Unlock()
 	}
 }
 
 // BuildFileTreeSkeleton pre-builds the file tree
 func (s *SyncService) BuildFileTreeSkeleton(forceRebuild bool) {
+	if !s.buildMu.TryLock() {
+		logger.Warning("🔒 BuildFileTreeSkeleton already running, skipping")
+		return
+	}
+	defer s.buildMu.Unlock()
+
 	if !forceRebuild {
+		// [Optimization] If tree is already loaded (e.g. by main.go), skip
+		if cnt := s.Tree.CountNodes(); cnt > 0 {
+			logger.Info("📂 File tree already loaded in memory (nodes: %d), skipping build", cnt)
+			return
+		}
+
 		// Try loading from cache
 		if err := s.Tree.Load(); err == nil && s.Tree.CountNodes() > 0 {
-			logger.Info("📂 Loaded cached file tree")
+			logger.Info("📂 Loaded cached file tree, nodes: %d", s.Tree.CountNodes())
 			return
+		} else if err != nil {
+			logger.Warning("⚠️ Failed to load cache: %v", err)
+		} else {
+			logger.Warning("⚠️ Cache is empty")
 		}
 		logger.Info("⚠️ Cache not found or invalid, starting full build...")
 	} else {
 		logger.Info("♻️ Force rebuilding file tree...")
 	}
 
-	s.DriveInfo.WaitRateLimit()
-
-	// Update FileTree ignore list (prevent stale config)
-	s.ConfigManager.Lock.RLock()
-	ignored := s.ConfigManager.Cfg.Google.IgnoredParents
-	s.ConfigManager.Lock.RUnlock()
-	s.Tree.SetIgnoredParents(ignored)
-
-	// [Debug] List all drives for user filtering
-	if drives, err := s.DriveInfo.ListAllDrives(); err == nil {
-		logger.Info("📋 [Debug] Found %d drives:", len(drives))
-		for _, d := range drives {
-			logger.Info("   - ID: %s | Name: %s", d.Id, d.Name)
-		}
-	} else {
-		logger.Warning("⚠️ Unable to get drives list: %v", err)
+	// Disk-Buffered Build Logic
+	tmpFile := model.TreeCacheFile + ".tmp"
+	f, err := os.Create(tmpFile)
+	if err != nil {
+		logger.Error("❌ Failed to create temp cache file: %v", err)
+		return
 	}
+	defer func() {
+		f.Close()
+		_ = os.Remove(tmpFile) // Cleanup if failed
+	}()
 
-	pt := ""
-	count := 0
-	for {
-		q := s.DriveInfo.Srv.Files.List().
-			Q("trashed = false").
-			Fields("nextPageToken, files(id, name, parents, mimeType, driveId)").
-			PageSize(1000).
-			SupportsAllDrives(true).
-			IncludeItemsFromAllDrives(true)
+	w := bufio.NewWriter(f)
+	enc := json.NewEncoder(w)
 
-		if pt != "" {
-			q.PageToken(pt)
-		}
+	s.ConfigManager.Lock.RLock()
+	targets := s.ConfigManager.Cfg.Google.TargetDriveIDs
+	s.ConfigManager.Lock.RUnlock()
 
-		r, err := q.Do()
-		if err != nil {
-			logger.Error("❌ Failed to list files: %v", err)
-			return
-		}
+	// Helper to scan a specific scope with buffering
+	scanScope := func(driveID string, scopeName string) {
+		logger.Info("🔍 Scanning %s...", scopeName)
+		count := 0
+		lastLogCount := 0
+		progressInterval := 1000    // Log every 1000 files
+		bufferFlushInterval := 1000 // Flush to disk every 1000 records
 
-		for _, f := range r.Files {
+		err := s.DriveInfo.ListFiles(context.Background(), "trashed = false", "nextPageToken, incompleteSearch, files(id, name, parents, mimeType, driveId)", driveID, func(f *drive.File) bool {
 			pid := ""
 			if len(f.Parents) > 0 {
 				pid = f.Parents[0]
+				if len(f.Parents) > 1 {
+					logger.Warning("⚠️ [Multi-Parent] Node %s (%s) has %d parents, using first: %s", f.Name, f.Id, len(f.Parents), pid)
+				}
 			}
 			isDir := f.MimeType == "application/vnd.google-apps.folder"
-			s.Tree.UpdateNode(f.Id, f.Name, pid, isDir, f.DriveId)
+
+			// Create node
+			node := model.FileNode{
+				ID:       f.Id,
+				Name:     f.Name,
+				ParentID: pid,
+				IsDir:    isDir,
+				DriveID:  f.DriveId,
+			}
+
+			// Stream write to disk
+			if err := enc.Encode(node); err != nil {
+				logger.Error("❌ Error writing node to buffer: %v", err)
+				return true // Try continue?
+			}
+
 			count++
-		}
-		logger.Verbose(model.LogLevelInfo, "   ↳ Loaded %d nodes...", count)
 
-		if r.NextPageToken == "" {
-			break
-		}
-		pt = r.NextPageToken
-	}
-	logger.Info("✅ Raw nodes loaded: %d, starting to prune ignored list...", s.Tree.CountNodes())
+			// Flush buffer periodically
+			if count%bufferFlushInterval == 0 {
+				if err := w.Flush(); err != nil {
+					logger.Error("❌ Error flushing buffer: %v", err)
+				}
 
-	// Prune ignored folders (recursive delete)
-	if len(ignored) > 0 {
-		prunedCount := 0
-		for _, ignoreID := range ignored {
-			// Get all descendants first
-			descendants := s.Tree.GetDescendants(ignoreID)
-			// Delete descendants
-			for _, d := range descendants {
-				s.Tree.RemoveNode(d.ID)
-				prunedCount++
+				// [Strict Rate Limit] Pause 5min every 1000 items
+				batchSleepSec := s.ConfigManager.Cfg.Google.BatchSleepInterval
+				if batchSleepSec < 300 {
+					batchSleepSec = 300 // Min 5 minutes
+				}
+				logger.Warning("⏳ [Risk Control] Scanned %d items. Pausing for %d seconds...", count, batchSleepSec)
+				time.Sleep(time.Duration(batchSleepSec) * time.Second)
+				logger.Info("▶️ Resuming scan...")
 			}
-			// Delete self
-			if _, ok := s.Tree.GetPath(ignoreID); ok {
-				s.Tree.RemoveNode(ignoreID)
-				prunedCount++
+
+			// Log progress
+			if count-lastLogCount >= progressInterval {
+				logger.Info("   📈 Progress: %d scanned (Buffered)...", count)
+				lastLogCount = count
 			}
+
+			return true // Continue
+		})
+
+		if err != nil {
+			if apiErr, ok := err.(*googleapi.Error); ok {
+				logger.Error("❌ Failed to scan %s: [NetCode: %d] %v", scopeName, apiErr.Code, apiErr.Message)
+			} else {
+				logger.Error("❌ Failed to scan %s: %v", scopeName, err)
+			}
+		} else {
+			logger.Info("✅ Scanned %s: %d nodes buffered", scopeName, count)
 		}
-		logger.Info("✂️ Pruned %d ignored nodes", prunedCount)
 	}
+
+	if len(targets) > 0 {
+		logger.Info("🎯 Target Mode: Scanning %d specific drives", len(targets))
+		for _, tid := range targets {
+			name := s.DriveInfo.GetDriveName(tid)
+			scanScope(tid, name)
+		}
+	} else {
+		logger.Warning("⚠️ No target drives configured. Skipping global scan.")
+		logger.Info("💡 Please configure Target Drives in the dashboard to start syncing.")
+		logger.Info("   (Go to Dashboard -> Targets to add Google Drive/Folder IDs)")
+	}
+
+	// Final flush
+	if err := w.Flush(); err != nil {
+		logger.Error("❌ Final flush failed: %v", err)
+		return
+	}
+	f.Close() // Explicit close to ensure write
+
+	// Atomic Swap on Disk
+	if err := os.Rename(tmpFile, model.TreeCacheFile); err != nil {
+		logger.Error("❌ Failed to commit cache file: %v", err)
+		return
+	}
+
+	logger.Info("💾 Cache commited to disk. Loading into memory...")
+
+	// Load the new tree from disk
+	newTree := NewFileTree(s.DriveInfo)
+	if err := newTree.Load(); err != nil {
+		logger.Error("❌ Failed to load new tree: %v", err)
+		return
+	}
+
+	// Atomic Swap in Memory
+	s.Tree.ReplaceWith(newTree)
 
 	logger.Info("✅ File tree build complete, final node count: %d", s.Tree.CountNodes())
 
-	// Save to cache
-	if err := s.Tree.Save(); err != nil {
-		logger.Error("❌ Failed to save file tree cache: %v", err)
-	} else {
-		logger.Info("💾 File tree cache saved")
-	}
+	// Save to cache async
+	go func() {
+		if err := s.Tree.Save(); err != nil {
+			logger.Error("❌ Failed to save file tree cache: %v", err)
+		} else {
+			logger.Info("💾 File tree cache saved")
+		}
+	}()
 }
 
 // ForceRebuild forces a file tree rebuild
@@ -237,12 +324,9 @@ func (s *SyncService) SyncOnce() {
 	logger.Debug(s.ConfigManager.Cfg.Advanced.LogLevel, "📋 [Diag] Current PageToken: %s", token)
 	s.DriveInfo.WaitRateLimit()
 
-	// Sync ignore list to Tree for ResolvePathWithFallback
-	s.ConfigManager.Lock.RLock()
-	ignored := s.ConfigManager.Cfg.Google.IgnoredParents
-	s.ConfigManager.Lock.RUnlock()
-	s.Tree.SetIgnoredParents(ignored)
-	logger.Debug(s.ConfigManager.Cfg.Advanced.LogLevel, "📋 [Diag] ignored_parents list: %v", ignored)
+	// empty block removed
+	// s.Tree.SetIgnoredParents(ignored) // Removed
+	// logger.Debug(s.ConfigManager.Cfg.Advanced.LogLevel, "📋 [Diag] ignored_parents list: %v", ignored)
 
 	// [Fix] Paginate to get all changes
 	var allChanges []*drive.Change
@@ -318,6 +402,7 @@ func (s *SyncService) SyncOnce() {
 	type Notif struct {
 		Path, Action string
 		IsDir        bool
+		DriveID      string
 	}
 	var notifs []Notif
 	processedIDs := make(map[string]bool)
@@ -342,7 +427,7 @@ func (s *SyncService) SyncOnce() {
 					processedIDs[d.ID] = true
 					logger.Info("🗑️ [Delete] %s", d.Path)
 					logger.WriteHistory(s.ConfigManager.Cfg, "DELETE", d.Path)
-					notifs = append(notifs, Notif{d.Path, "delete", d.IsDir})
+					notifs = append(notifs, Notif{d.Path, "delete", d.IsDir, d.DriveID})
 					rcloneDirs[filepath.Dir(d.Path)] = true
 					s.Tree.RemoveNode(d.ID)
 				}
@@ -360,11 +445,93 @@ func (s *SyncService) SyncOnce() {
 			pid = f.Parents[0]
 		}
 
-		// Check ignore list
-		if s.isIgnoredParent(pid) {
-			logger.Debug(s.ConfigManager.Cfg.Advanced.LogLevel, "🚫 [Diag] Skipping change: FileID=%s, Name=%s, DriveID=%s, ParentID=%s (ParentID in ignore list)", fileID, f.Name, f.DriveId, pid)
-			continue
+		// =============================
+		// [Strict Scope Check]
+		// Ensure we ONLY process changes from Target Drives.
+		// If a file moves out of a Target Drive, we silent-delete it.
+		// If an event is from a non-Target Drive, we ignore it completely.
+		// =============================
+		s.ConfigManager.Lock.RLock()
+		targets := s.ConfigManager.Cfg.Google.TargetDriveIDs
+		s.ConfigManager.Lock.RUnlock()
+
+		if len(targets) > 0 {
+			// Determine DriveID
+			dID := change.DriveId
+			if dID == "" && change.File != nil {
+				dID = change.File.DriveId
+			}
+
+			// If dID matches a target, we process it.
+			// "root" or empty usually maps to My Drive, check if that's targeted.
+			checkID := dID
+			if checkID == "" {
+				checkID = "root"
+			}
+
+			isTarget := false
+			for _, t := range targets {
+				if t == checkID {
+					isTarget = true
+					break
+				}
+			}
+
+			// For Deletes (File is nil), we must look up the old node to check its origin DriveID.
+			if change.File == nil {
+				if oldNode, ok := s.Tree.GetNode(change.FileId); ok {
+					// Check if the NODE was in a target drive
+					oldDID := oldNode.DriveID
+					oldCheckID := oldDID
+					if oldCheckID == "" {
+						oldCheckID = "root"
+					}
+					isOldTarget := false
+					for _, t := range targets {
+						if t == oldCheckID {
+							isOldTarget = true
+							break
+						}
+					}
+
+					if !isOldTarget {
+						// It was tracked but apparently not in target list anymore?
+						// Or it was never in target list (legacy)?
+						// Either way, if it's not a target drive, we ignore the external notification.
+						// But since it IS in our tree, we should probably remove it silently to clean up.
+						// Let's assume strict mode: ignore notification.
+						// Should we remove from tree? Yes, to be safe.
+						s.Tree.RemoveNode(change.FileId)
+						logger.Verbose(model.LogLevelInfo, "🗑️ [Scope] Silently removed non-target node %s (DriveID: %s)", change.FileId, oldDID)
+						continue
+					}
+					// If it WAS in target, proceed to Delete logic below.
+				} else {
+					// Not in tree, and not a file update. Ignore.
+					continue
+				}
+			} else {
+				// It's a File Update/Create/Move
+				if !isTarget {
+					// New state is NON-TARGET.
+					// Check if we were tracking it.
+					if _, exists := s.Tree.GetPath(change.FileId); exists {
+						// It moved OUT of scope.
+						// Silent delete.
+						s.Tree.RemoveNode(change.FileId)
+						logger.Info("📤 [Scope] Node %s moved out of target scope (DriveID: %s). Silently removing.", change.FileId, dID)
+					} else {
+						// We never knew it, and it's not a target. Fully ignore.
+						// verbose log only
+						// logger.Verbose(model.LogLevelDebug, "💤 [Scope] Ignored non-target change %s (DriveID: %s)", change.FileId, dID)
+					}
+					continue
+				}
+				// It IS a target. Proceed to Update logic.
+			}
 		}
+
+		// =============================
 
 		isDirBool := f.MimeType == "application/vnd.google-apps.folder"
 
@@ -376,7 +543,7 @@ func (s *SyncService) SyncOnce() {
 			logger.Info("🆕 [Create] %s", newPath)
 			logger.WriteHistory(s.ConfigManager.Cfg, "CREATE", newPath)
 			rcloneDirs[filepath.Dir(newPath)] = true
-			notifs = append(notifs, Notif{newPath, "create", isDirBool})
+			notifs = append(notifs, Notif{newPath, "create", isDirBool, f.DriveId})
 		} else if oldPath != newPath {
 			logger.Info("✏️ [Move] %s -> %s", oldPath, newPath)
 			logger.WriteHistory(s.ConfigManager.Cfg, "MOVE", newPath)
@@ -384,8 +551,8 @@ func (s *SyncService) SyncOnce() {
 			rcloneDirs[filepath.Dir(newPath)] = true
 
 			// For moves, send old path delete and new path create
-			notifs = append(notifs, Notif{oldPath, "delete", isDirBool})
-			notifs = append(notifs, Notif{newPath, "create", isDirBool})
+			notifs = append(notifs, Notif{oldPath, "delete", isDirBool, f.DriveId})
+			notifs = append(notifs, Notif{newPath, "create", isDirBool, f.DriveId})
 
 			if isDirBool {
 				descendants := s.Tree.GetDescendants(fileID)
@@ -397,8 +564,8 @@ func (s *SyncService) SyncOnce() {
 					relPath := strings.TrimPrefix(d.Path, newPath)
 					oldChildPath := oldPath + relPath
 					logger.Info("   ↳ [ChildMove] %s -> %s", oldChildPath, d.Path)
-					notifs = append(notifs, Notif{oldChildPath, "delete", d.IsDir})
-					notifs = append(notifs, Notif{d.Path, "create", d.IsDir})
+					notifs = append(notifs, Notif{oldChildPath, "delete", d.IsDir, d.DriveID})
+					notifs = append(notifs, Notif{d.Path, "create", d.IsDir, d.DriveID})
 				}
 			}
 		}
@@ -421,7 +588,7 @@ func (s *SyncService) SyncOnce() {
 	if len(notifs) > 0 {
 		logger.Info("📡 Sending %d notifications...", len(notifs))
 		for _, n := range notifs {
-			s.Symedia.SendWebhook(n.Path, n.Action, n.IsDir)
+			s.Symedia.SendWebhook(n.Path, n.Action, n.IsDir, n.DriveID)
 		}
 	}
 
@@ -442,14 +609,14 @@ type TaskStats struct {
 func (s *SyncService) GetTaskStats() TaskStats {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	// Check if we need to reset today's counter (new day check)
 	today := time.Now().Format("2006-01-02")
 	todayTasks := s.todayCompletedTasks
 	if s.lastResetDate != today {
 		todayTasks = 0 // New day, today's count is 0
 	}
-	
+
 	return TaskStats{
 		ActiveTasks:           s.activeTasks,
 		TodayCompletedTasks:   todayTasks,
