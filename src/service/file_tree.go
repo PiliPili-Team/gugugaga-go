@@ -44,13 +44,11 @@ func (t *FileTree) ReplaceWith(other *FileTree) {
 	defer t.Unlock()
 	defer other.RUnlock()
 
-	// Deep copy nodes
 	t.nodes = make(map[string]*model.FileNode, len(other.nodes))
 	for k, v := range other.nodes {
 		t.nodes[k] = v
 	}
 
-	// Deep copy children
 	t.children = make(map[string]map[string]*model.FileNode, len(other.children))
 	for pID, kids := range other.children {
 		newKids := make(map[string]*model.FileNode, len(kids))
@@ -151,7 +149,6 @@ func (t *FileTree) loadStreaming() error {
 	// Use json.Decoder for stream parsing (better handling of large tokens vs Scanner)
 	decoder := json.NewDecoder(bufio.NewReader(f))
 
-	// Pre-clear nodes
 	t.nodes = make(map[string]*model.FileNode)
 	count := 0
 

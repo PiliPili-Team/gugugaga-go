@@ -32,7 +32,6 @@ func NewServer(cm *config.Manager, h *Handler, m *Middleware) *Server {
 		logger.Info("✅ Static sub-filesystem created successfully")
 	}
 
-	// Set Handler's Middleware reference
 	h.SetMiddleware(m)
 
 	return &Server{
@@ -44,21 +43,16 @@ func NewServer(cm *config.Manager, h *Handler, m *Middleware) *Server {
 }
 
 func (s *Server) Start() {
-	// Setup router Mux
 	mux := http.NewServeMux()
 
-	// Auth API routes (login/logout)
 	mux.HandleFunc("/api/auth/login", s.Handler.HandleLogin)
 	mux.HandleFunc("/api/auth/logout", s.Handler.HandleLogout)
 
-	// Wallpaper API
 	mux.HandleFunc("/api/bing/wallpaper", s.Handler.HandleBingWallpaper)
 	mux.HandleFunc("/api/tmdb/wallpaper", s.Handler.HandleTMDBWallpaper)
 
-	// System status API
 	mux.HandleFunc("/api/status", s.Handler.HandleSystemStatus)
 
-	// API routes
 	mux.HandleFunc("/api/logs", s.Handler.HandleLogs)
 	mux.HandleFunc("/api/logs/clear_mem", s.Handler.HandleClearMem)
 	mux.HandleFunc("/api/logs/clear_files", s.Handler.HandleClearFiles)
@@ -71,13 +65,10 @@ func (s *Server) Start() {
 	mux.HandleFunc("/api/test_symedia", s.Handler.HandleTestSymedia)
 	mux.HandleFunc("/api/tree/refresh", s.Handler.HandleTreeRefresh)
 
-	// Webhook route
 	mux.HandleFunc(s.ConfigManager.Cfg.Server.WebhookPath, s.Handler.HandleWebhook)
 
-	// Static assets
 	mux.Handle("/", s.StaticFS)
 
-	// Middleware chain: HostCheck -> Auth -> Mux
 	// Note: AuthMiddleware internally skips webhook path and login auth
 	handler := s.Middleware.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		mux.ServeHTTP(w, r)

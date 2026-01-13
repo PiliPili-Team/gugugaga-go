@@ -324,10 +324,6 @@ func (s *SyncService) SyncOnce() {
 	logger.Debug(s.ConfigManager.Cfg.Advanced.LogLevel, "📋 [Diag] Current PageToken: %s", token)
 	s.DriveInfo.WaitRateLimit()
 
-	// empty block removed
-	// s.Tree.SetIgnoredParents(ignored) // Removed
-	// logger.Debug(s.ConfigManager.Cfg.Advanced.LogLevel, "📋 [Diag] ignored_parents list: %v", ignored)
-
 	// [Fix] Paginate to get all changes
 	var allChanges []*drive.Change
 	pageToken := token
@@ -374,7 +370,6 @@ func (s *SyncService) SyncOnce() {
 
 	logger.Debug(s.ConfigManager.Cfg.Advanced.LogLevel, "📊 [Diag] Total %d pages, %d changes", pageCount, len(allChanges))
 
-	// [Diag] Log change details
 	for i, change := range allChanges {
 		if change.File != nil {
 			driveID := change.File.DriveId
@@ -445,12 +440,10 @@ func (s *SyncService) SyncOnce() {
 			pid = f.Parents[0]
 		}
 
-		// =============================
 		// [Strict Scope Check]
 		// Ensure we ONLY process changes from Target Drives.
 		// If a file moves out of a Target Drive, we silent-delete it.
 		// If an event is from a non-Target Drive, we ignore it completely.
-		// =============================
 		s.ConfigManager.Lock.RLock()
 		targets := s.ConfigManager.Cfg.Google.TargetDriveIDs
 		s.ConfigManager.Lock.RUnlock()
@@ -530,8 +523,6 @@ func (s *SyncService) SyncOnce() {
 				// It IS a target. Proceed to Update logic.
 			}
 		}
-
-		// =============================
 
 		isDirBool := f.MimeType == "application/vnd.google-apps.folder"
 

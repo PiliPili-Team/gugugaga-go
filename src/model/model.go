@@ -1,6 +1,5 @@
 package model
 
-// ================= Constants =================
 const (
 	DataDir        = "userdata/data"
 	ConfigDir      = "userdata/config"
@@ -14,14 +13,11 @@ const (
 	MaxWebLogs = 500
 )
 
-// Log level definitions
 const (
 	LogLevelQuiet = 0 // Core changes only
 	LogLevelInfo  = 1 // Flow information
 	LogLevelDebug = 2 // Debug information
 )
-
-// ================= Config Models =================
 
 // Config represents all application configuration
 type Config struct {
@@ -117,7 +113,6 @@ type GoogleCredJSON struct {
 	} `json:"web"`
 }
 
-// ================= File Tree Models =================
 
 // FileNode represents a node in the file tree
 type FileNode struct {
@@ -136,7 +131,6 @@ type DescendantInfo struct {
 	DriveID string
 }
 
-// ================= API Models =================
 
 // LogsResponse represents logs API response
 type LogsResponse struct {
