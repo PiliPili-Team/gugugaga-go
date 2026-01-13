@@ -443,14 +443,19 @@ func (h *Handler) HandleConfigUpdate(w http.ResponseWriter, r *http.Request) {
 		newCfg.Auth.Password = oldCfg.Auth.Password
 	}
 
-	// Preserve TaskStats as they are managed by backend
 	newCfg.Advanced.TaskStats = oldCfg.Advanced.TaskStats
 
-	// Preserve TargetDriveRemarks if nil (missing from request), to prevent accidental clearing
-	// If the user meant to clear it, the frontend should send an empty map {}, not nil
+	logger.Debug(oldCfg.Advanced.LogLevel, "[Debug] Config Update - Old Remarks: %v (IsNil: %v)", oldCfg.Google.TargetDriveRemarks, oldCfg.Google.TargetDriveRemarks == nil)
+	logger.Debug(oldCfg.Advanced.LogLevel, "[Debug] Config Update - New Remarks (Before): %v (IsNil: %v)", newCfg.Google.TargetDriveRemarks, newCfg.Google.TargetDriveRemarks == nil)
+
 	if newCfg.Google.TargetDriveRemarks == nil {
 		newCfg.Google.TargetDriveRemarks = oldCfg.Google.TargetDriveRemarks
+		logger.Debug(oldCfg.Advanced.LogLevel, "[Debug] Config Update - Remarks preserved from old config")
+	} else if len(newCfg.Google.TargetDriveRemarks) == 0 && len(oldCfg.Google.TargetDriveRemarks) > 0 {
+		logger.Debug(oldCfg.Advanced.LogLevel, "[Debug] Config Update - New Remarks is empty map! Backend logic will assume frontend cleared it.")
 	}
+
+	logger.Debug(oldCfg.Advanced.LogLevel, "[Debug] Config Update - New Remarks (Final): %v", newCfg.Google.TargetDriveRemarks)
 
 	logChanged := (newCfg.Advanced.LogDir != oldCfg.Advanced.LogDir) ||
 		(newCfg.Advanced.LogSaveEnabled != oldCfg.Advanced.LogSaveEnabled)

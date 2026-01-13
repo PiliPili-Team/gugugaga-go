@@ -55,10 +55,13 @@ func NewSyncService(
 	lastResetDate := cm.Cfg.Advanced.TaskStats.LastResetDate
 	cm.Lock.RUnlock()
 
-	// Check if we need to reset today's counter (new day)
+	logger.Debug(model.LogLevelDebug, "[Stats] Loaded from config - Today: %d, History: %d, LastReset: %s", todayCompleted, historyCompleted, lastResetDate)
+
 	today := time.Now().Format("2006-01-02")
-	if lastResetDate != today {
+	if lastResetDate != "" && lastResetDate != today {
 		todayCompleted = 0
+	}
+	if lastResetDate == "" || lastResetDate != today {
 		lastResetDate = today
 	}
 
@@ -116,7 +119,6 @@ func (s *SyncService) StartProcessLoop() {
 		// Check if we need to reset today's counter (new day)
 		today := time.Now().Format("2006-01-02")
 		if s.lastResetDate != today {
-			s.todayCompletedTasks = 0
 			s.lastResetDate = today
 		}
 
@@ -614,8 +616,8 @@ func (s *SyncService) GetTaskStats() TaskStats {
 	// Check if we need to reset today's counter (new day check)
 	today := time.Now().Format("2006-01-02")
 	todayTasks := s.todayCompletedTasks
-	if s.lastResetDate != today {
-		todayTasks = 0 // New day, today's count is 0
+	if s.lastResetDate != "" && s.lastResetDate != today {
+		todayTasks = 0
 	}
 
 	return TaskStats{
