@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -258,8 +259,17 @@ func (s *SyncService) BuildFileTreeSkeleton(forceRebuild bool) {
 
 	if len(targets) > 0 {
 		logger.Info("🎯 Target Mode: Scanning %d specific drives", len(targets))
+
+		// Read remarks
+		s.ConfigManager.Lock.RLock()
+		remarks := s.ConfigManager.Cfg.Google.TargetDriveRemarks
+		s.ConfigManager.Lock.RUnlock()
+
 		for _, tid := range targets {
 			name := s.DriveInfo.GetDriveName(tid)
+			if remark, ok := remarks[tid]; ok && remark != "" {
+				name = fmt.Sprintf("%s (%s)", name, remark)
+			}
 			scanScope(tid, name)
 		}
 	} else {

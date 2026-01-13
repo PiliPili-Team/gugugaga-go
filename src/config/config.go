@@ -149,6 +149,11 @@ func (m *Manager) LoadConfig() {
 		m.Cfg.Google.BatchSleepInterval = 300
 	}
 
+	// Ensure map is initialized
+	if m.Cfg.Google.TargetDriveRemarks == nil {
+		m.Cfg.Google.TargetDriveRemarks = make(map[string]string)
+	}
+
 	// Set defaults for Rclone timeouts (Default 60s, Max 120s)
 	for i := range m.Cfg.Rclone {
 		if m.Cfg.Rclone[i].Timeout <= 0 {

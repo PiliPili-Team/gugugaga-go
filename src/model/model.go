@@ -66,11 +66,12 @@ type Config struct {
 	} `json:"server"`
 
 	Google struct {
-		RateLimitQPS       int      `json:"rate_limit_qps"`
-		PersonalDriveName  string   `json:"personal_drive_name"`
-		TargetDriveIDs     []string `json:"target_drive_ids"`     // Target Team Drive IDs
-		ListDelay          int      `json:"list_delay"`           // Milliseconds, min 1000
-		BatchSleepInterval int      `json:"batch_sleep_interval"` // Sleep seconds every 1000 items
+		RateLimitQPS       int               `json:"rate_limit_qps"`
+		PersonalDriveName  string            `json:"personal_drive_name"`
+		TargetDriveIDs     []string          `json:"target_drive_ids"`     // Target Team Drive IDs
+		TargetDriveRemarks map[string]string `json:"target_drive_remarks"` // Remarks for target drives
+		ListDelay          int               `json:"list_delay"`           // Milliseconds, min 1000
+		BatchSleepInterval int               `json:"batch_sleep_interval"` // Sleep seconds every 1000 items
 	} `json:"google"`
 
 	Rclone  []RcloneInstance `json:"rclone"`
@@ -113,7 +114,6 @@ type GoogleCredJSON struct {
 	} `json:"web"`
 }
 
-
 // FileNode represents a node in the file tree
 type FileNode struct {
 	ID       string
@@ -130,7 +130,6 @@ type DescendantInfo struct {
 	IsDir   bool
 	DriveID string
 }
-
 
 // LogsResponse represents logs API response
 type LogsResponse struct {

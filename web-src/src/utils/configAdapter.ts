@@ -42,6 +42,7 @@ interface BackendConfig {
     personal_drive_name?: string
     my_drive_name?: string
     target_drive_ids?: string[]
+    target_drive_remarks?: Record<string, string>
     list_delay?: number
     batch_sleep_interval?: number
     ignored_parents?: string[]
@@ -109,6 +110,7 @@ export function adaptBackendConfig(backend: BackendConfig): Config {
       qps: backend.google?.rate_limit_qps ?? 5,
       personal_drive_name: backend.google?.personal_drive_name || backend.google?.my_drive_name || '',
       target_drive_ids: backend.google?.target_drive_ids || [],
+      target_drive_remarks: backend.google?.target_drive_remarks || {},
       list_delay: backend.google?.list_delay ?? 1000,
       batch_sleep_interval: backend.google?.batch_sleep_interval ?? 300
     },
@@ -178,6 +180,7 @@ export function adaptFrontendConfig(frontend: Config): BackendConfig {
       rate_limit_qps: frontend.google.qps,
       personal_drive_name: frontend.google.personal_drive_name,
       target_drive_ids: frontend.google.target_drive_ids || [],
+      target_drive_remarks: frontend.google.target_drive_remarks || {},
       list_delay: frontend.google.list_delay || 1000,
       batch_sleep_interval: frontend.google.batch_sleep_interval || 300
     },

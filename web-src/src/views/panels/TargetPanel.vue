@@ -16,22 +16,8 @@ const isSaving = ref(false)
 const editingId = ref<string | null>(null)
 const editingNote = ref('')
 
-// 从 localStorage 获取备注
-const NOTES_KEY = 'gd_target_drive_notes'
-
-function getNotes(): Record<string, string> {
-  try {
-    return JSON.parse(localStorage.getItem(NOTES_KEY) || '{}')
-  } catch {
-    return {}
-  }
-}
-
-function saveNotes(notes: Record<string, string>) {
-  localStorage.setItem(NOTES_KEY, JSON.stringify(notes))
-}
-
-const notes = ref<Record<string, string>>(getNotes())
+// Remarks are now stored in backend config (config.google.target_drive_remarks)
+const notes = computed(() => configStore.config?.google?.target_drive_remarks || {})
 
 // 带备注的ID列表
 const idsWithNotes = computed(() => {
@@ -63,10 +49,11 @@ function addDriveId() {
   
   configStore.updateNested('google.target_drive_ids', [...current, idToAdd])
   
-  // 保存备注
+  // 保存备注到配置
   if (newNote.value.trim()) {
-    notes.value[idToAdd] = newNote.value.trim()
-    saveNotes(notes.value)
+    const currentRemarks = { ...configStore.config?.google?.target_drive_remarks }
+    currentRemarks[idToAdd] = newNote.value.trim()
+    configStore.updateNested('google.target_drive_remarks', currentRemarks)
   }
   
   newDriveId.value = ''
@@ -78,8 +65,11 @@ function removeDriveId(id: string) {
   configStore.updateNested('google.target_drive_ids', current.filter(i => i !== id))
   
   // 删除备注
-  delete notes.value[id]
-  saveNotes(notes.value)
+  const currentRemarks = { ...configStore.config?.google?.target_drive_remarks }
+  if (currentRemarks[id]) {
+    delete currentRemarks[id]
+    configStore.updateNested('google.target_drive_remarks', currentRemarks)
+  }
 }
 
 function startEditNote(id: string) {
@@ -89,12 +79,15 @@ function startEditNote(id: string) {
 
 function saveNote() {
   if (editingId.value) {
+    const currentRemarks = { ...configStore.config?.google?.target_drive_remarks }
+    
     if (editingNote.value.trim()) {
-      notes.value[editingId.value] = editingNote.value.trim()
+      currentRemarks[editingId.value] = editingNote.value.trim()
     } else {
-      delete notes.value[editingId.value]
+      delete currentRemarks[editingId.value]
     }
-    saveNotes(notes.value)
+    
+    configStore.updateNested('google.target_drive_remarks', currentRemarks)
   }
   editingId.value = null
   editingNote.value = ''
@@ -121,8 +114,9 @@ function handleNoteKeyDown(e: KeyboardEvent) {
   }
 }
 
+// onMounted remove unnecessary loading logic as config is reactive
 onMounted(() => {
-  notes.value = getNotes()
+  // Config should be loaded by parent or app entry
 })
 </script>
 
