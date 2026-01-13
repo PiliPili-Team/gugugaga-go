@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"crypto/subtle"
 	"encoding/json"
@@ -429,6 +430,10 @@ func (h *Handler) HandleConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		return
 	}
+
+	bodyBytes, _ := io.ReadAll(r.Body)
+	r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
 	var newCfg model.Config
 	if err := json.NewDecoder(r.Body).Decode(&newCfg); err != nil {
 		http.Error(w, "JSON format error", 400)
@@ -438,6 +443,8 @@ func (h *Handler) HandleConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	h.ConfigManager.Lock.RLock()
 	oldCfg := *h.ConfigManager.Cfg
 	h.ConfigManager.Lock.RUnlock()
+
+	logger.Debug(oldCfg.Advanced.LogLevel, "[Debug] Raw Config Payload: %s", string(bodyBytes))
 
 	if newCfg.Auth.Password == "" {
 		newCfg.Auth.Password = oldCfg.Auth.Password

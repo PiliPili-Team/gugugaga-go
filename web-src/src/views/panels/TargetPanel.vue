@@ -79,7 +79,8 @@ function startEditNote(id: string) {
 
 function saveNote() {
   if (editingId.value) {
-    const currentRemarks = { ...configStore.config?.google?.target_drive_remarks }
+    const currentRemarks: Record<string, string> = 
+      JSON.parse(JSON.stringify(configStore.config?.google?.target_drive_remarks || {}))
     
     if (editingNote.value.trim()) {
       currentRemarks[editingId.value] = editingNote.value.trim()
