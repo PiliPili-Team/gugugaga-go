@@ -38,6 +38,10 @@ Desktop.ini
 # Compiled binary
 gd-webhook-server
 
+# Temp files
+src/web/static/assets/index.css
+src/web/static/assets/index.js
+
 ########################
 # Frontend (common)
 ########################
