@@ -170,7 +170,7 @@ export default {
       googleDrive: 'Google Drive',
       qps: 'API QPS',
       qpsHint: 'API requests per second limit',
-      listDelay: 'List Request Delay (ms)',
+      listDelay: 'List Request Delay',
       listDelayHint: 'Delay between list requests (ms), min 1000ms',
       learnMore: 'Learn more',
       batchSleepInterval: 'Anti-Ban Pause Interval (s)',

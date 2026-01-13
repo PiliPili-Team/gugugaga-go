@@ -152,7 +152,7 @@ export default {
       googleDrive: 'Google Drive',
       qps: 'API QPS',
       qpsHint: '每秒 API 請求限制',
-      listDelay: '前台分頁請求間隔 (ms)',
+      listDelay: '前台分頁請求間隔',
       listDelayHint: '列表請求延遲 (毫秒)，最小 1000ms',
       learnMore: '了解更多',
       batchSleepInterval: '防風控暫停間隔 (秒)',

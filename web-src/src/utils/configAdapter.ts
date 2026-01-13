@@ -146,6 +146,7 @@ export function adaptBackendConfig(backend: BackendConfig): Config {
  * Convert frontend config to backend config format
  */
 export function adaptFrontendConfig(frontend: Config): BackendConfig {
+  console.log('[Debug] Adapting Frontend Config (Remarks):', frontend.google.target_drive_remarks)
   return {
     auth: {
       username: frontend.auth.username,
@@ -180,7 +181,10 @@ export function adaptFrontendConfig(frontend: Config): BackendConfig {
       rate_limit_qps: frontend.google.qps,
       personal_drive_name: frontend.google.personal_drive_name,
       target_drive_ids: frontend.google.target_drive_ids || [],
-      target_drive_remarks: frontend.google.target_drive_remarks || {},
+      // [Debug] Ensure this field is present even if empty
+      target_drive_remarks: (frontend.google.target_drive_remarks)
+        ? JSON.parse(JSON.stringify(frontend.google.target_drive_remarks))
+        : {},
       list_delay: frontend.google.list_delay || 1000,
       batch_sleep_interval: frontend.google.batch_sleep_interval || 300
     },
