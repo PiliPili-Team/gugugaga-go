@@ -443,6 +443,15 @@ func (h *Handler) HandleConfigUpdate(w http.ResponseWriter, r *http.Request) {
 		newCfg.Auth.Password = oldCfg.Auth.Password
 	}
 
+	// Preserve TaskStats as they are managed by backend
+	newCfg.Advanced.TaskStats = oldCfg.Advanced.TaskStats
+
+	// Preserve TargetDriveRemarks if nil (missing from request), to prevent accidental clearing
+	// If the user meant to clear it, the frontend should send an empty map {}, not nil
+	if newCfg.Google.TargetDriveRemarks == nil {
+		newCfg.Google.TargetDriveRemarks = oldCfg.Google.TargetDriveRemarks
+	}
+
 	logChanged := (newCfg.Advanced.LogDir != oldCfg.Advanced.LogDir) ||
 		(newCfg.Advanced.LogSaveEnabled != oldCfg.Advanced.LogSaveEnabled)
 
