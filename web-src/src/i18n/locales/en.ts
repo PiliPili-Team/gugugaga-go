@@ -18,7 +18,7 @@ export default {
     error: 'Error',
     warning: 'Warning'
   },
-  
+
   nav: {
     dashboard: 'Dashboard',
     basic: 'Basic Settings',
@@ -31,7 +31,7 @@ export default {
     actions: 'Quick Actions',
     more: 'More'
   },
-  
+
   header: {
     title: 'GD Watcher',
     subtitle: 'Google Drive File Monitor',
@@ -43,13 +43,13 @@ export default {
     customTheme: 'Custom Theme',
     appearance: 'Appearance'
   },
-  
+
   theme: {
     primaryColor: 'Primary Color',
     secondaryColor: 'Secondary Color',
     opacity: 'Opacity'
   },
-  
+
   dashboard: {
     systemStatus: 'System Status',
     online: 'Online',
@@ -61,12 +61,12 @@ export default {
     cpuUsage: 'CPU Usage',
     memoryUsage: 'Memory Usage'
   },
-  
+
   sidebar: {
     collapse: 'Collapse Sidebar',
     expand: 'Expand Sidebar'
   },
-  
+
   login: {
     title: 'Welcome Back',
     subtitle: 'Sign in to continue to GD Watcher',
@@ -80,7 +80,7 @@ export default {
     footer: 'Google Drive File Change Monitor',
     refreshWallpaper: 'Change Wallpaper'
   },
-  
+
   logs: {
     title: 'Live Logs',
     autoScroll: 'Auto Scroll',
@@ -89,7 +89,7 @@ export default {
     newestFirst: 'Newest First',
     oldestFirst: 'Oldest First'
   },
-  
+
   actions: {
     title: 'Quick Actions',
     testPath: 'Test Path',
@@ -109,7 +109,7 @@ export default {
       clearFiles: 'Are you sure you want to delete all log files? This cannot be undone.'
     }
   },
-  
+
   mappings: {
     regex: 'Regex Pattern',
     replacement: 'Replacement',
@@ -118,7 +118,7 @@ export default {
     empty: 'No mapping rules',
     addFirst: 'Add first rule'
   },
-  
+
   cron: {
     placeholder: '0 0 * * *',
     invalid: 'Invalid Cron expression',
@@ -137,7 +137,7 @@ export default {
       weekday: 'Week'
     }
   },
-  
+
   panels: {
     basic: {
       title: 'Basic Settings',
@@ -163,7 +163,7 @@ export default {
       sslKey: 'Private Key Path',
       sslKeyPlaceholder: '/path/to/key.pem'
     },
-    
+
     integrations: {
       title: 'Service Integrations',
       description: 'Configure Google Drive, Rclone, and Symedia integrations',
@@ -182,13 +182,15 @@ export default {
       symedia: 'Symedia Notifications',
       symediaHost: 'Host Address',
       symediaEndpoint: 'API Endpoint',
+      timeout: 'Timeout',
+      timeoutHint: 'Max 120 seconds',
       symediaTemplate: 'Request Template',
       symediaTemplateHint: 'Available variables:',
       notifyUnmatched: 'Notify unmatched paths',
       headers: 'Headers',
       noHeaders: 'No headers configured'
     },
-    
+
     mappings: {
       title: 'Path Mappings',
       description: 'Configure SA and Rclone path transformation rules',
@@ -197,7 +199,7 @@ export default {
       rcloneMappings: 'Rclone Path Mappings',
       rcloneMappingsDesc: 'Transform Google Drive paths to Rclone VFS paths'
     },
-    
+
     ignore: {
       title: 'Ignore Rules',
       description: 'Configure Google Drive folders to ignore',
@@ -207,7 +209,7 @@ export default {
       empty: 'No ignore rules configured',
       emptyHint: 'Add folder IDs to ignore file changes within them'
     },
-    
+
     advanced: {
       title: 'Advanced Settings',
       description: 'Configure sync parameters and log management',
@@ -229,7 +231,7 @@ export default {
       cleanupCron: 'Cleanup Schedule',
       cronLearnMore: 'Cron Expression'
     },
-    
+
     oauth: {
       title: 'OAuth Authentication',
       description: 'Configure Google OAuth credentials',
@@ -249,7 +251,7 @@ export default {
       noClientId: 'Please enter Client ID first'
     }
   },
-  
+
   settings: {
     theme: 'Theme',
     themeLight: 'Light',
@@ -257,7 +259,7 @@ export default {
     themeSystem: 'System',
     language: 'Language'
   },
-  
+
   footer: {
     version: 'Version',
     docs: 'Docs',

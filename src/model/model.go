@@ -75,6 +75,7 @@ type Config struct {
 		NotifyUnmatched bool                   `json:"notify_unmatched"`
 		Headers         map[string]string      `json:"headers"`
 		BodyTemplate    map[string]interface{} `json:"body_template"`
+		Timeout         int                    `json:"timeout"` // Seconds
 	} `json:"symedia"`
 	Mapping []MappingRule `json:"path_mapping"`
 }
@@ -84,6 +85,7 @@ type RcloneInstance struct {
 	Name     string        `json:"name"`
 	Host     string        `json:"host"`
 	Endpoint string        `json:"endpoint"`
+	Timeout  int           `json:"timeout"` // Seconds
 	Mapping  []MappingRule `json:"mapping"`
 }
 

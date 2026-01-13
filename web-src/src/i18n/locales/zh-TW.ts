@@ -13,7 +13,7 @@ export default {
     error: '錯誤',
     warning: '警告'
   },
-  
+
   nav: {
     dashboard: '儀表板',
     basic: '基礎設定',
@@ -26,7 +26,7 @@ export default {
     actions: '快捷操作',
     more: '更多'
   },
-  
+
   header: {
     title: 'GD Watcher',
     subtitle: 'Google Drive 檔案監控',
@@ -38,12 +38,12 @@ export default {
     customTheme: '自訂主題',
     appearance: '外觀'
   },
-  
+
   sidebar: {
     collapse: '收合側邊欄',
     expand: '展開側邊欄'
   },
-  
+
   dashboard: {
     systemStatus: '系統狀態',
     online: '運行中',
@@ -55,7 +55,7 @@ export default {
     cpuUsage: 'CPU 負載',
     memoryUsage: '記憶體負載'
   },
-  
+
   login: {
     title: '歡迎回來',
     subtitle: '登入以繼續使用 GD Watcher',
@@ -68,14 +68,14 @@ export default {
     error: '使用者名稱或密碼錯誤',
     footer: 'Google Drive 檔案變更監控系統'
   },
-  
+
   logs: {
     title: '即時日誌',
     autoScroll: '自動捲動',
     clear: '清空日誌',
     empty: '暫無日誌'
   },
-  
+
   actions: {
     title: '快捷操作',
     testPath: '測試路徑',
@@ -95,7 +95,7 @@ export default {
       clearFiles: '確定要刪除所有日誌檔案嗎？此操作不可恢復。'
     }
   },
-  
+
   mappings: {
     regex: '正則表達式',
     replacement: '替換內容',
@@ -104,7 +104,7 @@ export default {
     empty: '暫無對映規則',
     addFirst: '新增第一條規則'
   },
-  
+
   cron: {
     placeholder: '0 0 * * *',
     invalid: '無效的 Cron 表達式',
@@ -123,7 +123,7 @@ export default {
       weekday: '週'
     }
   },
-  
+
   panels: {
     basic: {
       title: '基礎設定',
@@ -145,7 +145,7 @@ export default {
       sslKey: '私鑰路徑',
       sslKeyPlaceholder: '/path/to/key.pem'
     },
-    
+
     integrations: {
       title: '服務整合',
       description: '設定 Google Drive、Rclone 和 Symedia 整合',
@@ -163,13 +163,15 @@ export default {
       symedia: 'Symedia 通知',
       symediaHost: '主機地址',
       symediaEndpoint: 'API 端點',
+      timeout: '逾時時間',
+      timeoutHint: '最大 120 秒',
       symediaTemplate: '請求範本',
       symediaTemplateHint: '可用變數：',
       notifyUnmatched: '通知未匹配的路徑',
       headers: '請求頭',
       noHeaders: '未設定請求頭'
     },
-    
+
     mappings: {
       title: '路徑對映',
       description: '設定 SA 和 Rclone 的路徑轉換規則',
@@ -178,7 +180,7 @@ export default {
       rcloneMappings: 'Rclone 路徑對映',
       rcloneMappingsDesc: '將 Google Drive 路徑轉換為 Rclone VFS 路徑'
     },
-    
+
     ignore: {
       title: '忽略設定',
       description: '設定需要忽略的 Google Drive 資料夾',
@@ -186,7 +188,7 @@ export default {
       empty: '未設定忽略規則',
       emptyHint: '新增資料夾 ID 以忽略其中的檔案變更'
     },
-    
+
     advanced: {
       title: '進階設定',
       description: '設定同步參數和日誌管理',
@@ -207,7 +209,7 @@ export default {
       retentionDays: '保留天數',
       cleanupCron: '清理排程'
     },
-    
+
     oauth: {
       title: 'OAuth 認證',
       description: '設定 Google OAuth 憑證',
@@ -227,7 +229,7 @@ export default {
       noClientId: '請先填寫 Client ID'
     }
   },
-  
+
   settings: {
     theme: '主題',
     themeLight: '淺色',
@@ -235,7 +237,7 @@ export default {
     themeSystem: '跟隨系統',
     language: '語言'
   },
-  
+
   footer: {
     version: '版本',
     docs: '文件',

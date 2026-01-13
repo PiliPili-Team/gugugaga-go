@@ -11,6 +11,7 @@ export interface RcloneInstance {
   host: string
   endpoint: string
   wait_for_data?: boolean
+  timeout?: number
 }
 
 export interface AuthConfig {
@@ -63,6 +64,7 @@ export interface SymediaConfig {
   path_mappings: MappingRule[]
   notify_unmatched?: boolean
   headers?: Record<string, string>
+  timeout?: number
 }
 
 export interface Config {

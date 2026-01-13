@@ -18,7 +18,7 @@ export default {
     error: '错误',
     warning: '警告'
   },
-  
+
   nav: {
     dashboard: '仪表盘',
     basic: '基础设置',
@@ -31,7 +31,7 @@ export default {
     actions: '快捷操作',
     more: '更多'
   },
-  
+
   header: {
     title: 'GD Watcher',
     subtitle: 'Google Drive 文件监控',
@@ -43,13 +43,13 @@ export default {
     customTheme: '自定义主题',
     appearance: '外观'
   },
-  
+
   theme: {
     primaryColor: '主色调',
     secondaryColor: '次色调',
     opacity: '透明度'
   },
-  
+
   dashboard: {
     systemStatus: '系统状态',
     online: '运行中',
@@ -61,12 +61,12 @@ export default {
     cpuUsage: 'CPU 负载',
     memoryUsage: '内存负载'
   },
-  
+
   sidebar: {
     collapse: '收起侧边栏',
     expand: '展开侧边栏'
   },
-  
+
   login: {
     title: '欢迎回来',
     subtitle: '登录以继续使用 GD Watcher',
@@ -80,7 +80,7 @@ export default {
     footer: 'Google Drive 文件变更监控系统',
     refreshWallpaper: '更换壁纸'
   },
-  
+
   logs: {
     title: '实时日志',
     autoScroll: '自动滚动',
@@ -89,7 +89,7 @@ export default {
     newestFirst: '最新在前',
     oldestFirst: '最旧在前'
   },
-  
+
   actions: {
     title: '快捷操作',
     testPath: '测试路径',
@@ -109,7 +109,7 @@ export default {
       clearFiles: '确定要删除所有日志文件吗？此操作不可恢复。'
     }
   },
-  
+
   mappings: {
     regex: '正则表达式',
     replacement: '替换内容',
@@ -118,7 +118,7 @@ export default {
     empty: '暂无映射规则',
     addFirst: '添加第一条规则'
   },
-  
+
   cron: {
     placeholder: '0 0 * * *',
     invalid: '无效的 Cron 表达式',
@@ -137,7 +137,7 @@ export default {
       weekday: '周'
     }
   },
-  
+
   panels: {
     basic: {
       title: '基础设置',
@@ -161,7 +161,7 @@ export default {
       sslKey: '私钥路径',
       sslKeyPlaceholder: '/path/to/key.pem'
     },
-    
+
     integrations: {
       title: '服务集成',
       description: '配置 Google Drive、Rclone 和 Symedia 集成',
@@ -180,13 +180,15 @@ export default {
       symedia: 'Symedia 通知',
       symediaHost: '主机地址',
       symediaEndpoint: 'API 端点',
+      timeout: '超时时间',
+      timeoutHint: '最大 120 秒',
       symediaTemplate: '请求模板',
       symediaTemplateHint: '可用变量：',
       notifyUnmatched: '通知未匹配的路径',
       headers: '请求头',
       noHeaders: '未配置请求头'
     },
-    
+
     mappings: {
       title: '路径映射',
       description: '配置 SA 和 Rclone 的路径转换规则',
@@ -195,7 +197,7 @@ export default {
       rcloneMappings: 'Rclone 路径映射',
       rcloneMappingsDesc: '将 Google Drive 路径转换为 Rclone VFS 路径'
     },
-    
+
     ignore: {
       title: '忽略配置',
       description: '配置需要忽略的 Google Drive 文件夹',
@@ -205,7 +207,7 @@ export default {
       empty: '未配置忽略规则',
       emptyHint: '添加文件夹 ID 以忽略其中的文件变更'
     },
-    
+
     advanced: {
       title: '高级设置',
       description: '配置同步参数和日志管理',
@@ -227,7 +229,7 @@ export default {
       cleanupCron: '清理计划',
       cronLearnMore: 'Cron 表达式'
     },
-    
+
     oauth: {
       title: 'OAuth 认证',
       description: '配置 Google OAuth 凭据',
@@ -247,7 +249,7 @@ export default {
       noClientId: '请先填写 Client ID'
     }
   },
-  
+
   settings: {
     theme: '主题',
     themeLight: '浅色',
@@ -255,7 +257,7 @@ export default {
     themeSystem: '跟随系统',
     language: '语言'
   },
-  
+
   footer: {
     version: '版本',
     docs: '文档',

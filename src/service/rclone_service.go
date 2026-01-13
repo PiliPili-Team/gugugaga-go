@@ -126,7 +126,11 @@ func (s *RcloneService) Refresh(originPath string) {
 				logger.Debug(logLevel, "   👉 Body: %s", string(data))
 			}
 
-			cl := &http.Client{Timeout: 30 * time.Second}
+			timeout := inst.Timeout
+			if timeout <= 0 {
+				timeout = 60
+			}
+			cl := &http.Client{Timeout: time.Duration(timeout) * time.Second}
 			resp, err := cl.Do(req)
 			if err != nil {
 				logger.Error("❌ [Rclone-%s] Refresh failed: %v", inst.Name, err)

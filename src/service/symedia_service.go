@@ -98,23 +98,27 @@ func (s *SymediaService) SendWebhook(originPath, action string, isDir bool) {
 
 	req, _ := http.NewRequest("POST", u.String(), bytes.NewBuffer(b))
 	req.Header.Set("Content-Type", "application/json")
-	
+
 	// Set user-configured headers
 	for k, v := range heads {
 		req.Header.Set(k, v)
 	}
-	
+
 	// If user didn't configure authorization, add default basic auth
 	if _, exists := heads["authorization"]; !exists {
 		req.Header.Set("authorization", "basic usernamepassword")
 	}
-	
+
 	// If user didn't configure user-agent, add default user-agent
 	if _, exists := heads["user-agent"]; !exists {
 		req.Header.Set("user-agent", "clouddrive2/0.9.8")
 	}
 
-	cl := &http.Client{Timeout: 10 * time.Second}
+	timeout := cfg.Symedia.Timeout
+	if timeout <= 0 {
+		timeout = 60
+	}
+	cl := &http.Client{Timeout: time.Duration(timeout) * time.Second}
 	resp, err := cl.Do(req)
 	if err != nil {
 		logger.Error("Webhook failed: %v", err)

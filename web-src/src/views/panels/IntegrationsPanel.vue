@@ -182,6 +182,20 @@ function updateSymediaHeaderKey(oldKey: string, newKey: string) {
                 />
               </div>
 
+              <div class="form-group">
+                <label>{{ t('panels.integrations.timeout') }} (s)</label>
+                <input
+                  type="number"
+                  class="input mono"
+                  :value="instance.timeout || 60"
+                  @input="updateRcloneInstance(index, 'timeout', Math.min(120, Number(($event.target as HTMLInputElement).value)))"
+                  placeholder="60"
+                  min="1"
+                  max="120"
+                />
+                <span class="hint">{{ t('panels.integrations.timeoutHint') }}</span>
+              </div>
+
               <div class="form-group full-width">
                 <label class="checkbox-label">
                   <input
@@ -247,6 +261,20 @@ function updateSymediaHeaderKey(oldKey: string, newKey: string) {
               @input="updateConfig('symedia.endpoint', ($event.target as HTMLInputElement).value)"
               placeholder="/api/v1/library/match"
             />
+          </div>
+
+          <div class="form-group">
+            <label>{{ t('panels.integrations.timeout') }} (s)</label>
+            <input
+              type="number"
+              class="input mono"
+              :value="configStore.config?.symedia?.timeout || 60"
+              @input="updateConfig('symedia.timeout', Math.min(120, Number(($event.target as HTMLInputElement).value)))"
+              placeholder="60"
+              min="1"
+              max="120"
+            />
+            <span class="hint">{{ t('panels.integrations.timeoutHint') }}</span>
           </div>
 
           <div class="form-group full-width">

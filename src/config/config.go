@@ -133,6 +133,22 @@ func (m *Manager) LoadConfig() {
 		m.Cfg.Server.WebhookPath = "/gd-webhook"
 	}
 
+	// Set defaults for Symedia timeout (Default 60s, Max 120s)
+	if m.Cfg.Symedia.Timeout <= 0 {
+		m.Cfg.Symedia.Timeout = 60
+	} else if m.Cfg.Symedia.Timeout > 120 {
+		m.Cfg.Symedia.Timeout = 120
+	}
+
+	// Set defaults for Rclone timeouts (Default 60s, Max 120s)
+	for i := range m.Cfg.Rclone {
+		if m.Cfg.Rclone[i].Timeout <= 0 {
+			m.Cfg.Rclone[i].Timeout = 60
+		} else if m.Cfg.Rclone[i].Timeout > 120 {
+			m.Cfg.Rclone[i].Timeout = 120
+		}
+	}
+
 	// Compile regex rules
 	m.SARegexRules = nil
 	for _, mapping := range m.Cfg.Mapping {
@@ -189,6 +205,16 @@ func (m *Manager) GetConfig() model.Config {
 func (m *Manager) UpdateConfig(newCfg model.Config) {
 	m.Lock.Lock()
 	defer m.Lock.Unlock()
+	// Validate/Fix configuration
+	if newCfg.Symedia.Timeout > 120 {
+		newCfg.Symedia.Timeout = 120
+	}
+	for i := range newCfg.Rclone {
+		if newCfg.Rclone[i].Timeout > 120 {
+			newCfg.Rclone[i].Timeout = 120
+		}
+	}
+
 	*m.Cfg = newCfg
 
 	// Recompile regex rules
