@@ -16,7 +16,7 @@ import {
   Server,
   Puzzle,
   Route,
-  EyeOff,
+  Eye,
   Settings,
   Key,
   FileText,
@@ -24,7 +24,6 @@ import {
   ChevronsLeft,
   Menu,
   LogOut,
-  HardDrive,
   Check,
   UserCircle,
   ChevronRight,
@@ -270,7 +269,7 @@ const navItems = computed(() => [
   { id: 'basic', icon: Server, label: t('nav.basic') },
   { id: 'integrations', icon: Puzzle, label: t('nav.integrations') },
   { id: 'mappings', icon: Route, label: t('nav.mappings') },
-  { id: 'target', icon: HardDrive, label: t('nav.target') }, // EyeOff -> HardDrive, ignore -> target
+  { id: 'target', icon: Eye, label: t('nav.target') },
   { id: 'advanced', icon: Settings, label: t('nav.advanced') },
   { id: 'oauth', icon: Key, label: t('nav.oauth') }
 ])
@@ -294,7 +293,7 @@ const mobileTabMainItems = computed(() => [
 const mobileTabMoreItems = computed(() => [
   { id: 'integrations', icon: Puzzle, label: t('nav.integrations') },
   { id: 'mappings', icon: Route, label: t('nav.mappings') },
-  { id: 'target', icon: EyeOff, label: t('nav.target') }, // Changed from ignore
+  { id: 'target', icon: Eye, label: t('nav.target') },
   { id: 'advanced', icon: Settings, label: t('nav.advanced') },
   { id: 'oauth', icon: Key, label: t('nav.oauth') }
 ])

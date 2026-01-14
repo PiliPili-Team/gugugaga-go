@@ -59,9 +59,12 @@ func NewSyncService(
 
 	today := time.Now().Format("2006-01-02")
 	if lastResetDate != "" && lastResetDate != today {
+		// Add today's completed tasks to history before resetting
+		historyCompleted += todayCompleted
 		todayCompleted = 0
+		lastResetDate = today
 	}
-	if lastResetDate == "" || lastResetDate != today {
+	if lastResetDate == "" {
 		lastResetDate = today
 	}
 
@@ -119,6 +122,9 @@ func (s *SyncService) StartProcessLoop() {
 		// Check if we need to reset today's counter (new day)
 		today := time.Now().Format("2006-01-02")
 		if s.lastResetDate != today {
+			// Add today's completed tasks to history before resetting
+			s.historyCompletedTasks += s.todayCompletedTasks
+			s.todayCompletedTasks = 0
 			s.lastResetDate = today
 		}
 
@@ -616,13 +622,17 @@ func (s *SyncService) GetTaskStats() TaskStats {
 	// Check if we need to reset today's counter (new day check)
 	today := time.Now().Format("2006-01-02")
 	todayTasks := s.todayCompletedTasks
+	historyTasks := s.historyCompletedTasks
 	if s.lastResetDate != "" && s.lastResetDate != today {
+		// When querying after midnight, today's tasks should show as 0
+		// and history should include the previous day's tasks
+		historyTasks += todayTasks
 		todayTasks = 0
 	}
 
 	return TaskStats{
 		ActiveTasks:           s.activeTasks,
 		TodayCompletedTasks:   todayTasks,
-		HistoryCompletedTasks: s.historyCompletedTasks,
+		HistoryCompletedTasks: historyTasks,
 	}
 }
