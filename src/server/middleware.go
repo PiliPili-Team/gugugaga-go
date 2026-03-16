@@ -125,14 +125,13 @@ func (m *Middleware) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		webhookPath := m.ConfigManager.Cfg.Server.WebhookPath
 		m.ConfigManager.Lock.RUnlock()
 
-		// Skip auth for webhook path and Bing wallpaper
-		if r.URL.Path == webhookPath || r.URL.Path == "/api/bing/wallpaper" {
-			next(w, r)
-			return
-		}
-
-		// Skip auth for login endpoint
-		if r.URL.Path == "/api/auth/login" {
+		// Skip auth for public endpoints
+		switch r.URL.Path {
+		case webhookPath,
+			"/api/auth/login",
+			"/api/auth/callback",
+			"/api/bing/wallpaper",
+			"/api/tmdb/wallpaper":
 			next(w, r)
 			return
 		}
